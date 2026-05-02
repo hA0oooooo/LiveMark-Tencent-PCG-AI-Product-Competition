@@ -25,6 +25,9 @@ class AccountCreate(BaseModel):
     target_audience: str = ""
     style_positioning: str = ""
     follower_count: int = 0
+    current_note_count: int = 0
+    total_likes: int = 0
+    total_saves: int = 0
     strategy_summary: str = ""
     shooting_style_memory: str = ""
     content_direction_memory: str = ""
@@ -38,6 +41,9 @@ class AccountUpdate(BaseModel):
     target_audience: str | None = None
     style_positioning: str | None = None
     follower_count: int | None = None
+    current_note_count: int | None = None
+    total_likes: int | None = None
+    total_saves: int | None = None
     strategy_summary: str | None = None
     shooting_style_memory: str | None = None
     content_direction_memory: str | None = None
@@ -70,6 +76,7 @@ class AccountBenchmarkRead(BaseModel):
     avg_likes: float
     avg_saves: float
     avg_comments: float
+    avg_shares: float = 0
     avg_follows: float
     avg_like_rate: float = 0
     avg_save_rate: float = 0
@@ -86,13 +93,12 @@ class HistoricalPostCreate(BaseModel):
     likes: int = 0
     saves: int = 0
     comments: int = 0
-    follows: int | None = None
+    shares: int = 0
     has_interaction: bool = False
     has_emotion: bool = False
     has_rare_view: bool = False
     has_cover_text: bool = False
     has_bgm: bool = False
-    creator_note: str = ""
 
 
 class HistoricalPostRead(HistoricalPostCreate):
@@ -248,6 +254,7 @@ class ContentTypePerformanceRead(BaseModel):
     avg_likes: float
     avg_saves: float
     avg_comments: float
+    avg_shares: float = 0
     avg_follows: float
     avg_like_rate: float
     avg_save_rate: float
@@ -273,6 +280,7 @@ class HistoricalPostStatsRead(BaseModel):
     avg_likes: float
     avg_saves: float
     avg_comments: float
+    avg_shares: float = 0
     avg_follows: float
     content_type_performance: list[ContentTypePerformanceRead]
 

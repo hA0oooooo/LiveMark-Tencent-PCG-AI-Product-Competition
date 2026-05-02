@@ -14,6 +14,9 @@ Base = declarative_base()
 
 SQLITE_SCHEMA_COLUMNS = {
     "accounts": {
+        "current_note_count": "INTEGER DEFAULT 0",
+        "total_likes": "INTEGER DEFAULT 0",
+        "total_saves": "INTEGER DEFAULT 0",
         "strategy_summary": "TEXT DEFAULT ''",
         "shooting_style_memory": "TEXT DEFAULT ''",
         "content_direction_memory": "TEXT DEFAULT ''",
@@ -23,6 +26,9 @@ SQLITE_SCHEMA_COLUMNS = {
     },
     "assets": {
         "context_note": "TEXT DEFAULT ''",
+    },
+    "historical_posts": {
+        "shares": "INTEGER DEFAULT 0",
     },
     "clips": {
         "editing_advice": "TEXT DEFAULT ''",

@@ -6,6 +6,9 @@ export type Account = {
   target_audience: string;
   style_positioning: string;
   follower_count: number;
+  current_note_count: number;
+  total_likes: number;
+  total_saves: number;
   avg_views: number;
   avg_likes: number;
   avg_saves: number;
@@ -27,6 +30,7 @@ export type AccountBenchmark = {
   avg_likes: number;
   avg_saves: number;
   avg_comments: number;
+  avg_shares: number;
   avg_follows: number;
   avg_like_rate: number;
   avg_save_rate: number;
@@ -45,13 +49,12 @@ export type HistoricalPost = {
   likes: number;
   saves: number;
   comments: number;
-  follows: number | null;
+  shares: number;
   has_interaction: boolean;
   has_emotion: boolean;
   has_rare_view: boolean;
   has_cover_text: boolean;
   has_bgm: boolean;
-  creator_note: string;
   created_at: string;
 };
 
@@ -158,6 +161,7 @@ export type ContentTypePerformance = {
   avg_likes: number;
   avg_saves: number;
   avg_comments: number;
+  avg_shares: number;
   avg_follows: number;
   avg_like_rate: number;
   avg_save_rate: number;

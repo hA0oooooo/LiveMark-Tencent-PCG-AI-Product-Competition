@@ -42,7 +42,6 @@ def normalize_historical_post_row(row: dict) -> HistoricalPostCreate:
 
     publish_time = row.get("publish_time") or None
     parsed_time = datetime.fromisoformat(publish_time) if publish_time else None
-    follows_raw = row.get("follows")
     return HistoricalPostCreate(
         title=row.get("title", "未命名历史内容"),
         content_type=row.get("content_type", "long_tail"),
@@ -51,13 +50,12 @@ def normalize_historical_post_row(row: dict) -> HistoricalPostCreate:
         likes=as_int(row.get("likes")),
         saves=as_int(row.get("saves")),
         comments=as_int(row.get("comments")),
-        follows=None if follows_raw in (None, "") else as_int(follows_raw),
+        shares=as_int(row.get("shares")),
         has_interaction=as_bool(row.get("has_interaction")),
         has_emotion=as_bool(row.get("has_emotion")),
         has_rare_view=as_bool(row.get("has_rare_view")),
         has_cover_text=as_bool(row.get("has_cover_text")),
         has_bgm=as_bool(row.get("has_bgm")),
-        creator_note=row.get("creator_note", ""),
     )
 
 

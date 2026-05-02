@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { createHistoricalPost, getAccountBenchmark, getDefaultAccount, getHistoricalPosts, updateAccount } from "@/lib/api";
 import type { Account, AccountBenchmark, HistoricalPost } from "@/lib/types";
 import { contentTypeLabels } from "@/lib/constants";
-import { formatNumber, formatRate } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Field";
@@ -56,8 +56,7 @@ export default function AccountPage() {
       likes: Number(form.get("likes")),
       saves: Number(form.get("saves")),
       comments: Number(form.get("comments")),
-      follows: Number(form.get("follows") || 0),
-      creator_note: String(form.get("creator_note") || "")
+      shares: Number(form.get("shares") || 0)
     });
     event.currentTarget.reset();
     await load();
@@ -81,6 +80,9 @@ export default function AccountPage() {
             <Label label="目标粉丝"><Textarea name="target_audience" defaultValue={account.target_audience} rows={3} /></Label>
             <Label label="账号风格定位"><Textarea name="style_positioning" defaultValue={account.style_positioning} rows={3} /></Label>
             <Label label="粉丝数"><Input name="follower_count" type="number" defaultValue={account.follower_count} /></Label>
+            <Label label="当前发布笔记数"><Input name="current_note_count" type="number" defaultValue={account.current_note_count} /></Label>
+            <Label label="当前获得点赞数"><Input name="total_likes" type="number" defaultValue={account.total_likes} /></Label>
+            <Label label="当前获得收藏数"><Input name="total_saves" type="number" defaultValue={account.total_saves} /></Label>
             <div className="rounded-md border border-line bg-surface p-3">
               <div className="text-sm font-medium">账号长期记忆</div>
               <p className="mt-1 text-xs text-muted">由用户确认后维护，AI 复盘只给更新建议，不自动覆盖。</p>
@@ -96,12 +98,10 @@ export default function AccountPage() {
         <Card>
           <CardTitle>账号基准数据</CardTitle>
           <div className="grid gap-3 md:grid-cols-3">
-            <Metric label="平均浏览" value={formatNumber(benchmark.avg_views)} />
-            <Metric label="平均点赞率" value={formatRate(benchmark.avg_like_rate)} />
-            <Metric label="平均收藏率" value={formatRate(benchmark.avg_save_rate)} />
-            <Metric label="平均评论率" value={formatRate(benchmark.avg_comment_rate)} />
-            <Metric label="平均转粉率" value={benchmark.avg_follows ? formatRate(benchmark.avg_follow_rate) : "暂无"} />
-            <Metric label="历史内容" value={formatNumber(benchmark.historical_post_count)} />
+            <Metric label="粉丝数" value={formatNumber(account.follower_count)} />
+            <Metric label="当前发布笔记数" value={formatNumber(account.current_note_count)} />
+            <Metric label="当前获得点赞数" value={formatNumber(account.total_likes)} />
+            <Metric label="当前获得收藏数" value={formatNumber(account.total_saves)} />
           </div>
         </Card>
       </div>
@@ -116,8 +116,7 @@ export default function AccountPage() {
           <Input name="likes" type="number" placeholder="点赞" required />
           <Input name="saves" type="number" placeholder="收藏" required />
           <Input name="comments" type="number" placeholder="评论" required />
-          <Input name="follows" type="number" placeholder="涨粉，可选" />
-          <Input name="creator_note" placeholder="创作者判断" className="md:col-span-4" />
+          <Input name="shares" type="number" placeholder="分享" />
           <Button className="md:col-span-1">新增</Button>
         </form>
       </Card>
@@ -126,7 +125,7 @@ export default function AccountPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-muted">
-              <tr><th className="py-2">标题</th><th>类型</th><th>浏览</th><th>点赞</th><th>收藏</th><th>评论</th><th>涨粉</th><th>判断</th></tr>
+              <tr><th className="py-2">标题</th><th>类型</th><th>浏览</th><th>点赞</th><th>收藏</th><th>评论</th><th>分享</th></tr>
             </thead>
             <tbody>
               {posts.map((post) => (
@@ -137,8 +136,7 @@ export default function AccountPage() {
                   <td>{formatNumber(post.likes)}</td>
                   <td>{formatNumber(post.saves)}</td>
                   <td>{formatNumber(post.comments)}</td>
-                  <td>{post.follows ? formatNumber(post.follows) : "暂无"}</td>
-                  <td>{post.creator_note}</td>
+                  <td>{formatNumber(post.shares || 0)}</td>
                 </tr>
               ))}
             </tbody>

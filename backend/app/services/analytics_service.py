@@ -18,6 +18,7 @@ def get_account_benchmark(db: Session, account_id: int) -> dict:
         "avg_likes": account.avg_likes,
         "avg_saves": account.avg_saves,
         "avg_comments": account.avg_comments,
+        "avg_shares": 0,
         "avg_follows": account.avg_follows,
         "avg_like_rate": compute_rate(account.avg_likes, account.avg_views),
         "avg_save_rate": compute_rate(account.avg_saves, account.avg_views),
@@ -37,6 +38,7 @@ def get_historical_post_stats(db: Session, account_id: int) -> dict:
             "avg_likes": 0,
             "avg_saves": 0,
             "avg_comments": 0,
+            "avg_shares": 0,
             "avg_follows": 0,
             "content_type_performance": [],
         }
@@ -46,6 +48,7 @@ def get_historical_post_stats(db: Session, account_id: int) -> dict:
         "avg_likes": sum(p.likes for p in posts) / count,
         "avg_saves": sum(p.saves for p in posts) / count,
         "avg_comments": sum(p.comments for p in posts) / count,
+        "avg_shares": sum((getattr(p, "shares", 0) or 0) for p in posts) / count,
         "avg_follows": sum((p.follows or 0) for p in posts) / count if any((p.follows or 0) for p in posts) else 0,
         "content_type_performance": get_content_type_performance(db, account_id),
     }
@@ -63,6 +66,7 @@ def get_content_type_performance(db: Session, account_id: int) -> list[dict]:
         avg_likes = sum(p.likes for p in items) / count
         avg_saves = sum(p.saves for p in items) / count
         avg_comments = sum(p.comments for p in items) / count
+        avg_shares = sum((getattr(p, "shares", 0) or 0) for p in items) / count
         has_follows = any((p.follows or 0) for p in items)
         avg_follows = sum((p.follows or 0) for p in items) / count if has_follows else 0
         rows.append(
@@ -73,6 +77,7 @@ def get_content_type_performance(db: Session, account_id: int) -> list[dict]:
                 "avg_likes": avg_likes,
                 "avg_saves": avg_saves,
                 "avg_comments": avg_comments,
+                "avg_shares": avg_shares,
                 "avg_follows": avg_follows,
                 "avg_like_rate": compute_rate(avg_likes, avg_views),
                 "avg_save_rate": compute_rate(avg_saves, avg_views),
@@ -105,11 +110,19 @@ def get_dashboard_stats(db: Session, account_id: int) -> dict:
 
 def get_growth_insights(db: Session, account_id: int) -> list[str]:
     performance = get_content_type_performance(db, account_id)
-    if not performance:
-        return ["先导入历史内容，建立账号基准后再判断内容实验方向。"]
-    best = performance[0]
     account = account_repository.get(db, account_id)
     profile = memory_service.account_profile_memory(account) if account else {}
+    if not performance:
+        insights = [
+            "当前账号已使用手动基准数据，后续请从素材上传、发布矩阵和复盘数据开始积累真实内容记忆。",
+            "复盘时优先观察收藏率、评论率和可选转粉率，并与账号基准对比。",
+        ]
+        if profile.get("shooting_style_memory"):
+            insights.append(f"拍摄风格建议：{profile['shooting_style_memory']}")
+        if profile.get("content_direction_memory"):
+            insights.append(f"内容方向建议：{profile['content_direction_memory']}")
+        return insights
+    best = performance[0]
     learning = memory_service.recent_account_learning(db, account_id, limit=3)
     insights = [
         f"{best['content_type']} 当前相对更适合做发布优先级判断。",

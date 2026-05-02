@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { getDashboardStats, getDefaultAccount } from "@/lib/api";
 import type { DashboardStats } from "@/lib/types";
 import { contentTypeLabels } from "@/lib/constants";
-import { formatNumber, formatRate } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { ErrorState, LoadingState } from "@/components/shared/State";
 
@@ -32,14 +32,11 @@ export default function DashboardPage() {
 
   const metricCards = [
     ["粉丝量", formatNumber(data.account.follower_count)],
-    ["历史内容", formatNumber(data.historical_post_count)],
+    ["当前发布笔记数", formatNumber(data.account.current_note_count)],
+    ["当前获得点赞数", formatNumber(data.account.total_likes)],
+    ["当前获得收藏数", formatNumber(data.account.total_saves)],
     ["素材数量", formatNumber(data.asset_count)],
-    ["发布计划", formatNumber(data.publish_plan_count)],
-    ["平均浏览", formatNumber(data.benchmark.avg_views)],
-    ["平均点赞率", formatRate(data.benchmark.avg_like_rate)],
-    ["平均收藏率", formatRate(data.benchmark.avg_save_rate)],
-    ["平均评论率", formatRate(data.benchmark.avg_comment_rate)],
-    ["平均转粉率", data.benchmark.avg_follows ? formatRate(data.benchmark.avg_follow_rate) : "暂无"]
+    ["发布计划", formatNumber(data.publish_plan_count)]
   ];
 
   return (

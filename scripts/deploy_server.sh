@@ -30,7 +30,12 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-python -m app.seed
+if [ "${RESET_DEMO_DATA:-0}" = "1" ]; then
+  echo "[LiveMark] RESET_DEMO_DATA=1, resetting account baseline and clearing runtime data..."
+  python -m app.seed
+else
+  python -c "from app.database import init_db; init_db(); print('Database schema ready. Set RESET_DEMO_DATA=1 to reset demo data.')"
+fi
 
 echo "[LiveMark] Building frontend..."
 cd "$APP_DIR/frontend"

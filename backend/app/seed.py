@@ -1,9 +1,12 @@
 import json
+import shutil
 from pathlib import Path
 
+from sqlalchemy import text
+
+from app.config import settings
 from app.database import SessionLocal, init_db
-from app.repositories import account_repository, historical_post_repository
-from app.services import account_service, historical_post_service
+from app.repositories import account_repository
 
 
 SEED_DIR = Path(__file__).resolve().parent / "data" / "seed"
@@ -13,26 +16,45 @@ def load_first_account_json() -> dict:
     return json.loads((SEED_DIR / "first_account.json").read_text(encoding="utf-8"))
 
 
-def load_historical_posts_csv():
-    return historical_post_service.load_posts_from_csv(SEED_DIR / "historical_posts.csv")
-
-
 def seed_first_account(db):
     data = load_first_account_json()
-    existing = account_repository.get_by_name(db, data["name"])
+    data = {
+        "avg_views": 0,
+        "avg_likes": 0,
+        "avg_saves": 0,
+        "avg_comments": 0,
+        "avg_follows": 0,
+        **data,
+    }
+    existing = account_repository.get_default(db)
     if existing:
         return account_repository.update(db, existing, data)
     return account_repository.create(db, data)
 
 
 def seed_historical_posts(db, account_id: int):
-    historical_post_repository.delete_by_account(db, account_id)
-    posts = load_historical_posts_csv()
-    return historical_post_service.bulk_create_posts(db, account_id, posts)
+    db.execute(text("DELETE FROM historical_posts"))
+    db.commit()
+    return []
 
 
-def recalculate_seed_account_baseline(db, account_id: int):
-    return account_service.recalculate_account_baseline(db, account_id)
+def clear_demo_runtime_data(db):
+    for table in ["post_results", "publish_plans", "clips", "frames", "assets"]:
+        db.execute(text(f"DELETE FROM {table}"))
+    db.commit()
+
+
+def clear_runtime_files():
+    for directory in [settings.UPLOAD_DIR, settings.FRAME_DIR, settings.CLIP_DIR]:
+        path = Path(directory)
+        path.mkdir(parents=True, exist_ok=True)
+        for child in path.iterdir():
+            if child.name == ".gitkeep":
+                continue
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
 
 
 def run_seed():
@@ -41,8 +63,9 @@ def run_seed():
     try:
         account = seed_first_account(db)
         seed_historical_posts(db, account.id)
-        recalculate_seed_account_baseline(db, account.id)
-        print(f"Seed completed: account_id={account.id}")
+        clear_demo_runtime_data(db)
+        clear_runtime_files()
+        print(f"Seed completed: account_id={account.id}, historical_posts=0, runtime_assets=0")
     finally:
         db.close()
 
