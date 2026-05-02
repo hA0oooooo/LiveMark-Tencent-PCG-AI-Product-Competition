@@ -1,1 +1,4 @@
-# LiveMark-Tencent-PCG-AI-Product-Competition
+# LiveMark
+
+LiveMark 是一个面向小红书直拍 KOC 的 AI 账号增长资产管理 Demo。它以账号历史内容为基准，支持上传直拍视频、抽帧分析、生成候选片段、计算“涨粉机会评分”、生成小红书发布矩阵，并在手动录入发布后数据后生成内容实验复盘。
+
