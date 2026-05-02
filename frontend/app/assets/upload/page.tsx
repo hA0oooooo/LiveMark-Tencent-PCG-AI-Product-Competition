@@ -6,7 +6,7 @@ import { getDefaultAccount, uploadAsset } from "@/lib/api";
 import type { Account } from "@/lib/types";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input, Label } from "@/components/ui/Field";
+import { Input, Label, Textarea } from "@/components/ui/Field";
 import { ErrorState, LoadingState } from "@/components/shared/State";
 
 export default function UploadAssetPage() {
@@ -52,6 +52,7 @@ export default function UploadAssetPage() {
           <Label label="活动名称"><Input name="event_name" placeholder="例如：春季赛线下现场" required /></Label>
           <Label label="场景类型"><Input name="scene_type" placeholder="例如：赛后互动" /></Label>
           <Label label="目标人物"><Input name="target_person" placeholder="例如：选手名 / 队伍名" /></Label>
+          <Label label="素材背景说明"><Textarea name="context_note" rows={4} placeholder="补充活动背景、人物身份、现场发生了什么、你希望重点分析的看点。AI 不联网识别人物，会优先参考这里。" /></Label>
           <Button disabled={loading}>{loading ? "上传中" : "上传素材"}</Button>
         </form>
       </Card>

@@ -25,6 +25,11 @@ class AccountCreate(BaseModel):
     target_audience: str = ""
     style_positioning: str = ""
     follower_count: int = 0
+    strategy_summary: str = ""
+    shooting_style_memory: str = ""
+    content_direction_memory: str = ""
+    audience_preference_memory: str = ""
+    negative_lessons: str = ""
 
 
 class AccountUpdate(BaseModel):
@@ -33,6 +38,11 @@ class AccountUpdate(BaseModel):
     target_audience: str | None = None
     style_positioning: str | None = None
     follower_count: int | None = None
+    strategy_summary: str | None = None
+    shooting_style_memory: str | None = None
+    content_direction_memory: str | None = None
+    audience_preference_memory: str | None = None
+    negative_lessons: str | None = None
 
 
 class AccountRead(AccountCreate):
@@ -44,6 +54,12 @@ class AccountRead(AccountCreate):
     avg_saves: float
     avg_comments: float
     avg_follows: float
+    strategy_summary: str
+    shooting_style_memory: str
+    content_direction_memory: str
+    audience_preference_memory: str
+    negative_lessons: str
+    updated_memory_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -123,6 +139,8 @@ class ClipRead(BaseModel):
     growth_score: float
     target_metric: TargetMetric
     ai_reason: str
+    editing_advice: str
+    account_fit_reason: str
     risk_note: str
     created_at: datetime
 
@@ -135,6 +153,7 @@ class AssetRead(BaseModel):
     event_name: str
     scene_type: str
     target_person: str
+    context_note: str
     video_path: str
     duration: float
     upload_time: datetime
@@ -218,6 +237,7 @@ class PostResultRead(PostResultCreate):
     relative_follow_lift: float
     ai_review: str
     next_action: str
+    ai_memory_suggestion: str
     created_at: datetime
 
 

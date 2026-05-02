@@ -6,6 +6,7 @@
 - account_profile: {account_profile}
 - account_benchmark: {account_benchmark}
 - historical_content_type_stats: {historical_content_type_stats}
+- recent_account_learning: {recent_account_learning}
 - asset_info: {asset_info}
 - clip_info: {clip_info}
 - clip_scores: {clip_scores}
@@ -27,3 +28,4 @@
 }
 
 约束：必须围绕小红书直拍内容，必须服务涨粉目标，不能只写好听标题，必须解释这条内容如何提升点击、收藏、评论或转粉。
+请显式参考账号长期记忆、历史内容类型表现和最近复盘学习；如果素材背景说明为空，不要编造人物身份或外部事实。

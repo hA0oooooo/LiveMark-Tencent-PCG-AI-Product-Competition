@@ -70,6 +70,7 @@ export default function AssetDetailPage() {
           <div className="grid gap-2 text-sm text-muted">
             <div>场景类型：{asset.scene_type || "未填写"}</div>
             <div>目标人物：{asset.target_person || "未填写"}</div>
+            <div>素材背景：{asset.context_note || "未填写"}</div>
             <div>时长：{asset.duration.toFixed(1)} 秒</div>
             <div>摘要：{asset.summary || "暂无"}</div>
           </div>

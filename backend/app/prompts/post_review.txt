@@ -6,6 +6,7 @@
 - account_profile: {account_profile}
 - account_benchmark: {account_benchmark}
 - historical_content_type_stats: {historical_content_type_stats}
+- recent_account_learning: {recent_account_learning}
 - publish_plan: {publish_plan}
 - post_result_metrics: {post_result_metrics}
 - relative_lifts: {relative_lifts}
@@ -19,7 +20,15 @@
   "problem_diagnosis": "",
   "next_action": "",
   "next_content_experiments": ["", "", ""],
-  "account_learning": ""
+  "account_learning": "",
+  "memory_update_suggestion": {
+    "strategy_summary": "",
+    "shooting_style_memory": "",
+    "content_direction_memory": "",
+    "audience_preference_memory": "",
+    "negative_lessons": ""
+  }
 }
 
 约束：必须基于账号基准做相对分析，必须说明是否帮助涨粉，必须告诉用户下一条内容怎么做，必须区分点击、收藏、评论、转粉的不同含义，不能只说数据不错。
+只提出账号长期记忆的更新建议，不要自动声称已经更新账号记忆。

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.exceptions import not_found
@@ -26,6 +28,15 @@ def update_account(db: Session, account_id: int, account_update: AccountUpdate):
     account = get_account(db, account_id)
     data = account_update.model_dump(exclude_unset=True)
     data.pop("platform", None)
+    memory_fields = {
+        "strategy_summary",
+        "shooting_style_memory",
+        "content_direction_memory",
+        "audience_preference_memory",
+        "negative_lessons",
+    }
+    if memory_fields.intersection(data):
+        data["updated_memory_at"] = datetime.utcnow()
     return account_repository.update(db, account, data)
 
 

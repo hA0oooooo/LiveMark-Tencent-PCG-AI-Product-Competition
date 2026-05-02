@@ -18,6 +18,7 @@ def create_asset_from_upload(
     event_name: str,
     scene_type: str,
     target_person: str,
+    context_note: str = "",
 ):
     account_service.get_account(db, account_id)
     if not is_allowed_video_file(file.filename or ""):
@@ -31,6 +32,7 @@ def create_asset_from_upload(
             "event_name": event_name,
             "scene_type": scene_type,
             "target_person": target_person,
+            "context_note": context_note,
             "video_path": video_path,
             "duration": duration,
             "status": "uploaded",
@@ -87,6 +89,7 @@ def analyze_asset(db: Session, asset_id: int):
             "platform": "小红书",
             "scene_type": asset.scene_type,
             "target_person": asset.target_person,
+            "context_note": asset.context_note,
             "account_positioning": account.style_positioning,
             "target_audience": account.target_audience,
         }

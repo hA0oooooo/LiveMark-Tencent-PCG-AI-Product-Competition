@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.exceptions import not_found
 from app.repositories import account_repository, asset_repository, post_result_repository, publish_plan_repository
 from app.schemas import PostResultCreate
-from app.services import analytics_service, modelscope_service
+from app.services import analytics_service, memory_service, modelscope_service
 from app.utils.metric_utils import compute_lift, compute_rate
 
 
@@ -27,9 +27,11 @@ def compute_relative_lifts(metrics_source, benchmark: dict) -> dict:
     }
 
 
-def generate_review_text(account, plan, result, benchmark) -> tuple[str, str]:
-    review = modelscope_service.generate_post_review_with_llm(account, plan, result, benchmark)
-    return json.dumps(review, ensure_ascii=False), review.get("next_action", "")
+def generate_review_text(db: Session, account, plan, result, benchmark) -> tuple[str, str, str]:
+    memory_context = memory_service.build_review_context(db, account, plan, result, benchmark)
+    review = modelscope_service.generate_post_review_with_llm(account, plan, result, benchmark, memory_context)
+    memory_suggestion = review.get("memory_update_suggestion", {})
+    return json.dumps(review, ensure_ascii=False), review.get("next_action", ""), json.dumps(memory_suggestion, ensure_ascii=False)
 
 
 def create_post_result_and_review(db: Session, result_create: PostResultCreate):
@@ -44,9 +46,10 @@ def create_post_result_and_review(db: Session, result_create: PostResultCreate):
     lifts = compute_relative_lifts(result_create, benchmark)
     data = {**result_create.model_dump(), **metrics, **lifts, "ai_review": "", "next_action": ""}
     result = post_result_repository.create(db, data)
-    ai_review, next_action = generate_review_text(account, plan, result, benchmark)
+    ai_review, next_action, ai_memory_suggestion = generate_review_text(db, account, plan, result, benchmark)
     result.ai_review = ai_review
     result.next_action = next_action
+    result.ai_memory_suggestion = ai_memory_suggestion
     db.commit()
     db.refresh(result)
     publish_plan_repository.update(db, plan, {"status": "reviewed"})

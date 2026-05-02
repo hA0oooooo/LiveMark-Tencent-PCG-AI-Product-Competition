@@ -58,6 +58,8 @@ export default function AnalysisPage() {
               <div className="text-sm text-muted">涨粉机会评分</div>
               <div className="mt-2 text-sm">目标指标：{targetMetricLabels[clip.target_metric]}</div>
               <p className="mt-2 text-sm text-muted">{clip.ai_reason}</p>
+              {clip.editing_advice && <p className="mt-2 rounded bg-surface p-2 text-xs text-ink">剪辑建议：{clip.editing_advice}</p>}
+              {clip.account_fit_reason && <p className="mt-2 rounded bg-surface p-2 text-xs text-muted">账号匹配：{clip.account_fit_reason}</p>}
               {clip.risk_note && <p className="mt-2 rounded bg-surface p-2 text-xs text-muted">风险提示：{clip.risk_note}</p>}
             </div>
           ))}

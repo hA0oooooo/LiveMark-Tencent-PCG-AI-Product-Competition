@@ -22,6 +22,7 @@ export default function ReviewDetailPage() {
   if (!result) return <LoadingState text="正在加载复盘详情" />;
 
   const review = parseJsonText<Record<string, string | string[]>>(result.ai_review, {});
+  const memorySuggestion = parseJsonText<Record<string, string>>(result.ai_memory_suggestion, {});
 
   return (
     <div className="page-grid">
@@ -55,6 +56,16 @@ export default function ReviewDetailPage() {
           <Block label="下一条内容建议" value={String(review.next_action || result.next_action)} />
           <Block label="下一轮内容实验" value={Array.isArray(review.next_content_experiments) ? review.next_content_experiments.join(" / ") : ""} />
           <Block label="账号学习结论" value={String(review.account_learning || "")} />
+        </div>
+      </Card>
+      <Card>
+        <CardTitle>账号长期记忆更新建议</CardTitle>
+        <div className="grid gap-3 text-sm">
+          <Block label="增长策略摘要" value={memorySuggestion.strategy_summary || ""} />
+          <Block label="拍摄风格记忆" value={memorySuggestion.shooting_style_memory || ""} />
+          <Block label="内容方向记忆" value={memorySuggestion.content_direction_memory || ""} />
+          <Block label="目标粉丝偏好" value={memorySuggestion.audience_preference_memory || ""} />
+          <Block label="不建议继续强化" value={memorySuggestion.negative_lessons || ""} />
         </div>
       </Card>
     </div>

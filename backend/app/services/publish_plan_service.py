@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.exceptions import not_found
 from app.repositories import asset_repository, publish_plan_repository
-from app.services import account_service, analytics_service, clip_service, modelscope_service, xhs_strategy_service
+from app.services import account_service, analytics_service, clip_service, memory_service, modelscope_service, xhs_strategy_service
 from app.schemas import PublishPlanUpdate
 
 ALLOWED_TARGET_METRICS = {"click", "save", "comment", "follow", "long_tail"}
@@ -40,7 +40,8 @@ def generate_plan_for_clip(db: Session, clip_id: int):
         raise not_found("未找到素材")
     account = account_service.get_account(db, asset.account_id)
     benchmark = analytics_service.get_account_benchmark(db, account.id)
-    llm_plan = modelscope_service.generate_publish_plan_with_llm(account, asset, clip, benchmark)
+    memory_context = memory_service.build_publish_context(db, account, asset, clip, benchmark)
+    llm_plan = modelscope_service.generate_publish_plan_with_llm(account, asset, clip, benchmark, memory_context)
     fallback = xhs_strategy_service.build_fallback_plan(asset, clip)
     data = {**fallback, **{k: v for k, v in llm_plan.items() if v}}
     return publish_plan_repository.create(

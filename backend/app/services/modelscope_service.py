@@ -44,6 +44,13 @@ POST_REVIEW_FALLBACK = {
     "next_action": "下一条内容优先延续表现更稳定的现场视角，并强化评论引导。",
     "next_content_experiments": ["保留现场感", "强化封面文字", "围绕评论区问题补拍"],
     "account_learning": "账号应持续记录不同内容类型的相对表现，形成发布优先级。",
+    "memory_update_suggestion": {
+        "strategy_summary": "继续以账号基准对比驱动内容实验。",
+        "shooting_style_memory": "保留现场感和关键互动瞬间。",
+        "content_direction_memory": "优先测试历史表现稳定的内容类型。",
+        "audience_preference_memory": "继续观察收藏、评论和转粉信号。",
+        "negative_lessons": "避免只记录泛现场画面而缺少明确看点。",
+    },
 }
 
 
@@ -94,24 +101,18 @@ def analyze_frames_with_qwen_vl(frame_paths: list[str], context: dict) -> list[d
     return [analyze_frame_with_qwen_vl(path, context) for path in frame_paths]
 
 
-def generate_publish_plan_with_llm(account: Any, asset: Any, clip: Any, benchmark: dict) -> dict:
+def generate_publish_plan_with_llm(account: Any, asset: Any, clip: Any, benchmark: dict, memory_context: dict | None = None) -> dict:
     try:
+        context = memory_context or {}
         prompt = prompt_service.render_prompt(
             "publish_plan_generation.txt",
-            account_profile=json.dumps({"name": account.name, "niche": account.niche}, ensure_ascii=False),
-            account_benchmark=json.dumps(benchmark, ensure_ascii=False),
-            historical_content_type_stats="",
-            asset_info=json.dumps({"event_name": asset.event_name, "scene_type": asset.scene_type}, ensure_ascii=False),
-            clip_info=json.dumps({"start_time": clip.start_time, "end_time": clip.end_time}, ensure_ascii=False),
-            clip_scores=json.dumps(
-                {
-                    "growth_score": clip.growth_score,
-                    "interaction_score": clip.interaction_score,
-                    "emotion_score": clip.emotion_score,
-                    "rarity_score": clip.rarity_score,
-                },
-                ensure_ascii=False,
-            ),
+            account_profile=json.dumps(context.get("account_profile", {"name": account.name, "niche": account.niche}), ensure_ascii=False),
+            account_benchmark=json.dumps(context.get("account_benchmark", benchmark), ensure_ascii=False),
+            historical_content_type_stats=json.dumps(context.get("historical_content_type_stats", []), ensure_ascii=False),
+            recent_account_learning=json.dumps(context.get("recent_account_learning", []), ensure_ascii=False),
+            asset_info=json.dumps(context.get("asset_info", {"event_name": asset.event_name, "scene_type": asset.scene_type}), ensure_ascii=False),
+            clip_info=json.dumps(context.get("clip_info", {"start_time": clip.start_time, "end_time": clip.end_time}), ensure_ascii=False),
+            clip_scores=json.dumps(context.get("clip_scores", {"growth_score": clip.growth_score}), ensure_ascii=False),
             target_metric=clip.target_metric,
         )
         text = call_openai_compatible_chat([{"role": "user", "content": prompt}], settings.TEXT_MODEL_NAME, temperature=0.6)
@@ -120,34 +121,18 @@ def generate_publish_plan_with_llm(account: Any, asset: Any, clip: Any, benchmar
         return PUBLISH_PLAN_FALLBACK.copy()
 
 
-def generate_post_review_with_llm(account: Any, publish_plan: Any, post_result: Any, benchmark: dict) -> dict:
+def generate_post_review_with_llm(account: Any, publish_plan: Any, post_result: Any, benchmark: dict, memory_context: dict | None = None) -> dict:
     try:
+        context = memory_context or {}
         prompt = prompt_service.render_prompt(
             "post_review.txt",
-            account_profile=json.dumps({"name": account.name, "niche": account.niche}, ensure_ascii=False),
-            account_benchmark=json.dumps(benchmark, ensure_ascii=False),
-            historical_content_type_stats="",
-            publish_plan=json.dumps({"title": publish_plan.title, "target_metric": publish_plan.target_metric}, ensure_ascii=False),
-            post_result_metrics=json.dumps(
-                {
-                    "views": post_result.views,
-                    "likes": post_result.likes,
-                    "saves": post_result.saves,
-                    "comments": post_result.comments,
-                    "follows": post_result.follows,
-                },
-                ensure_ascii=False,
-            ),
-            relative_lifts=json.dumps(
-                {
-                    "relative_view_lift": post_result.relative_view_lift,
-                    "relative_like_lift": post_result.relative_like_lift,
-                    "relative_save_lift": post_result.relative_save_lift,
-                    "relative_comment_lift": post_result.relative_comment_lift,
-                    "relative_follow_lift": post_result.relative_follow_lift,
-                },
-                ensure_ascii=False,
-            ),
+            account_profile=json.dumps(context.get("account_profile", {"name": account.name, "niche": account.niche}), ensure_ascii=False),
+            account_benchmark=json.dumps(context.get("account_benchmark", benchmark), ensure_ascii=False),
+            historical_content_type_stats=json.dumps(context.get("historical_content_type_stats", []), ensure_ascii=False),
+            recent_account_learning=json.dumps(context.get("recent_account_learning", []), ensure_ascii=False),
+            publish_plan=json.dumps(context.get("publish_plan", {"title": publish_plan.title, "target_metric": publish_plan.target_metric}), ensure_ascii=False),
+            post_result_metrics=json.dumps(context.get("post_result_metrics", {}), ensure_ascii=False),
+            relative_lifts=json.dumps(context.get("relative_lifts", {}), ensure_ascii=False),
         )
         text = call_openai_compatible_chat([{"role": "user", "content": prompt}], settings.TEXT_MODEL_NAME, temperature=0.5)
         return {**POST_REVIEW_FALLBACK, **parse_model_json_response(text, POST_REVIEW_FALLBACK)}

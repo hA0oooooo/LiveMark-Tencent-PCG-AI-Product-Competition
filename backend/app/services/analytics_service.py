@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.exceptions import not_found
 from app.repositories import account_repository, asset_repository, historical_post_repository, publish_plan_repository
+from app.services import memory_service
 from app.utils.metric_utils import compute_lift, compute_rate
 
 
@@ -107,11 +108,23 @@ def get_growth_insights(db: Session, account_id: int) -> list[str]:
     if not performance:
         return ["先导入历史内容，建立账号基准后再判断内容实验方向。"]
     best = performance[0]
-    return [
+    account = account_repository.get(db, account_id)
+    profile = memory_service.account_profile_memory(account) if account else {}
+    learning = memory_service.recent_account_learning(db, account_id, limit=3)
+    insights = [
         f"{best['content_type']} 当前相对更适合做发布优先级判断。",
         "复盘时优先观察收藏率、评论率和可选转粉率。",
-        "下一轮增长建议应围绕账号基准中表现更稳定的内容类型展开。",
     ]
+    if profile.get("shooting_style_memory"):
+        insights.append(f"拍摄风格建议：{profile['shooting_style_memory']}")
+    if profile.get("content_direction_memory"):
+        insights.append(f"内容方向建议：{profile['content_direction_memory']}")
+    if learning:
+        latest = next((item for item in learning if item.get("account_learning")), learning[0])
+        insights.append(f"最近复盘学习：{latest.get('account_learning') or latest.get('next_action')}")
+    else:
+        insights.append("下一轮增长建议应围绕账号基准中表现更稳定的内容类型展开。")
+    return insights
 
 
 def compare_post_to_baseline(post_metrics: dict, benchmark: dict) -> dict:

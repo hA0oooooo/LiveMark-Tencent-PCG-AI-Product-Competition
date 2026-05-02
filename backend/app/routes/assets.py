@@ -15,9 +15,10 @@ def upload_asset(
     event_name: str = Form(...),
     scene_type: str = Form(""),
     target_person: str = Form(""),
+    context_note: str = Form(""),
     db: Session = Depends(get_db),
 ):
-    asset = asset_service.create_asset_from_upload(db, file, account_id, event_name, scene_type, target_person)
+    asset = asset_service.create_asset_from_upload(db, file, account_id, event_name, scene_type, target_person, context_note)
     return {"asset": asset, "message": "素材上传成功"}
 
 

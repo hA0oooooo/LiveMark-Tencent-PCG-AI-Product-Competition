@@ -20,6 +20,13 @@ export default function DashboardPage() {
       .catch((err) => setError(err.message));
   }, []);
 
+  const formatChartValue = (value: unknown): string => {
+    if (typeof value !== "number") return String(value ?? "");
+    return Number.isInteger(value)
+      ? formatNumber(value)
+      : value.toLocaleString("zh-CN", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  };
+
   if (error) return <ErrorState message={error} />;
   if (!data) return <LoadingState text="正在加载账号增长主页" />;
 
@@ -67,7 +74,7 @@ export default function DashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip formatter={(value) => formatChartValue(value)} />
                 <Bar dataKey="avg_views" name="平均浏览" fill="#276f86" />
                 <Bar dataKey="avg_saves" name="平均收藏" fill="#d83a56" />
               </BarChart>

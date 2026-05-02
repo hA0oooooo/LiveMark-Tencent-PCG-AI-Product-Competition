@@ -81,6 +81,15 @@ export default function AccountPage() {
             <Label label="目标粉丝"><Textarea name="target_audience" defaultValue={account.target_audience} rows={3} /></Label>
             <Label label="账号风格定位"><Textarea name="style_positioning" defaultValue={account.style_positioning} rows={3} /></Label>
             <Label label="粉丝数"><Input name="follower_count" type="number" defaultValue={account.follower_count} /></Label>
+            <div className="rounded-md border border-line bg-surface p-3">
+              <div className="text-sm font-medium">账号长期记忆</div>
+              <p className="mt-1 text-xs text-muted">由用户确认后维护，AI 复盘只给更新建议，不自动覆盖。</p>
+            </div>
+            <Label label="当前增长策略摘要"><Textarea name="strategy_summary" defaultValue={account.strategy_summary} rows={3} /></Label>
+            <Label label="拍摄风格记忆"><Textarea name="shooting_style_memory" defaultValue={account.shooting_style_memory} rows={3} /></Label>
+            <Label label="内容方向记忆"><Textarea name="content_direction_memory" defaultValue={account.content_direction_memory} rows={3} /></Label>
+            <Label label="目标粉丝偏好记忆"><Textarea name="audience_preference_memory" defaultValue={account.audience_preference_memory} rows={3} /></Label>
+            <Label label="不建议继续强化的内容"><Textarea name="negative_lessons" defaultValue={account.negative_lessons} rows={3} /></Label>
             <Button disabled={saving}>{saving ? "保存中" : "保存账号画像"}</Button>
           </form>
         </Card>

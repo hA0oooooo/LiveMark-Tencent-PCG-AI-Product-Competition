@@ -31,6 +31,8 @@ def generate_candidate_clips(asset, frames: list, frame_analyses: list[dict], hi
                 "target_metric": target_metric,
                 "ai_reason": analysis.get("fan_reaction_hypothesis")
                 or scoring_service.explain_growth_score(scores, target_metric),
+                "editing_advice": build_editing_advice(frame.timestamp, clip_type, target_metric, analysis),
+                "account_fit_reason": build_account_fit_reason(clip_type, scores),
                 "risk_note": analysis.get("risk_note", ""),
                 **scores,
             }
@@ -76,3 +78,25 @@ def get_clip(db: Session, clip_id: int):
 
 def rank_clips(clips: list):
     return sorted(clips, key=lambda item: item["growth_score"] if isinstance(item, dict) else item.growth_score, reverse=True)
+
+
+def build_editing_advice(timestamp: float, clip_type: str, target_metric: str, analysis: dict) -> str:
+    metric_hint = {
+        "click": "把最稀缺的画面放在前 1 秒，封面文字直接点出现场才看到的瞬间。",
+        "save": "保留清晰稳定的画面，节奏不要切太碎，适合做可反复看的收藏片段。",
+        "comment": "保留人物反应和现场互动，结尾用问题引导评论区讨论。",
+        "follow": "突出目标人物状态和人设细节，让观众形成继续关注的理由。",
+        "long_tail": "保留现场氛围和完整情绪，让片段适合几天后仍被回看。",
+    }
+    return (
+        f"围绕 {timestamp:.1f}s 附近剪出 {clip_type} 片段。"
+        f"{metric_hint.get(target_metric, metric_hint['long_tail'])}"
+        f"画面判断：{analysis.get('description', '需人工复核画面重点')}"
+    )
+
+
+def build_account_fit_reason(clip_type: str, scores: dict) -> str:
+    return (
+        f"该片段被归为 {clip_type}，账号匹配分 {scores.get('account_fit_score', 0):.1f}。"
+        "判断依据来自账号历史内容类型表现、目标粉丝偏好和当前片段互动/情绪/稀缺视角信号。"
+    )

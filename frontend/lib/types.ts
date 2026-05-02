@@ -11,6 +11,12 @@ export type Account = {
   avg_saves: number;
   avg_comments: number;
   avg_follows: number;
+  strategy_summary: string;
+  shooting_style_memory: string;
+  content_direction_memory: string;
+  audience_preference_memory: string;
+  negative_lessons: string;
+  updated_memory_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -77,6 +83,8 @@ export type Clip = {
   growth_score: number;
   target_metric: "click" | "save" | "comment" | "follow" | "long_tail";
   ai_reason: string;
+  editing_advice: string;
+  account_fit_reason: string;
   risk_note: string;
   created_at: string;
 };
@@ -105,6 +113,7 @@ export type Asset = {
   event_name: string;
   scene_type: string;
   target_person: string;
+  context_note: string;
   video_path: string;
   duration: number;
   upload_time: string;
@@ -138,6 +147,7 @@ export type PostResult = {
   relative_follow_lift: number;
   ai_review: string;
   next_action: string;
+  ai_memory_suggestion: string;
   created_at: string;
 };
 
