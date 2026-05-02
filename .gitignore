@@ -7,6 +7,7 @@ pytest-cache-files-*/
 # Project source note
 agent.md
 agent/
+docs/
 
 # Local backend runtime data and secrets
 backend/.venv/
@@ -32,6 +33,7 @@ frontend/.env.*
 # Root secrets
 .env
 .env.*
+!/.env.example
 
 # Logs and OS/editor files
 *.log

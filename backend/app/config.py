@@ -5,7 +5,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
-load_dotenv()
+ROOT_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(ROOT_DIR / ".env")
 
 
 class Settings:
@@ -19,7 +20,7 @@ class Settings:
     CLIP_DIR = Path(os.getenv("CLIP_DIR", "app/data/clips"))
 
     MODELSCOPE_API_KEY = os.getenv("MODELSCOPE_API_KEY", "")
-    MODELSCOPE_BASE_URL = os.getenv("MODELSCOPE_BASE_URL", "https://api-inference.modelscope.cn/v1")
+    MODELSCOPE_BASE_URL = os.getenv("MODELSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
     VISION_MODEL_NAME = os.getenv("VISION_MODEL_NAME", "")
     TEXT_MODEL_NAME = os.getenv("TEXT_MODEL_NAME", "")
 
