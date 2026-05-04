@@ -75,6 +75,10 @@ export async function getAsset(assetId: number): Promise<Asset> {
   return request<Asset>(`/api/assets/${assetId}`);
 }
 
+export async function deleteAsset(assetId: number): Promise<{ message: string }> {
+  return request<{ message: string }>(`/api/assets/${assetId}`, { method: "DELETE" });
+}
+
 export async function analyzeAsset(assetId: number): Promise<{ asset: Asset; message: string }> {
   return request<{ asset: Asset; message: string }>(`/api/assets/${assetId}/analyze`, { method: "POST" });
 }
@@ -106,6 +110,10 @@ export async function getPublishPlan(planId: number): Promise<PublishPlan> {
 
 export async function updatePublishPlan(planId: number, payload: Partial<PublishPlan>): Promise<PublishPlan> {
   return request<PublishPlan>(`/api/publish-plans/${planId}`, { method: "PUT", body: JSON.stringify(payload) });
+}
+
+export async function deletePublishPlan(planId: number): Promise<{ message: string }> {
+  return request<{ message: string }>(`/api/publish-plans/${planId}`, { method: "DELETE" });
 }
 
 export async function createPostResult(payload: Partial<PostResult>): Promise<PostResult> {

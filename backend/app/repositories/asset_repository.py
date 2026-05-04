@@ -39,3 +39,8 @@ def update(db: Session, asset: Asset, data: dict) -> Asset:
     db.commit()
     db.refresh(asset)
     return asset
+
+
+def delete(db: Session, asset: Asset) -> None:
+    db.delete(asset)
+    db.commit()

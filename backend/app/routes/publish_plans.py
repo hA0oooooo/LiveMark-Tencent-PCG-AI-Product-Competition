@@ -31,3 +31,8 @@ def get_plan(plan_id: int, db: Session = Depends(get_db)):
 @router.put("/api/publish-plans/{plan_id}", response_model=PublishPlanRead)
 def update_plan(plan_id: int, payload: PublishPlanUpdate, db: Session = Depends(get_db)):
     return publish_plan_service.update_plan(db, plan_id, payload)
+
+
+@router.delete("/api/publish-plans/{plan_id}")
+def delete_plan(plan_id: int, db: Session = Depends(get_db)):
+    return publish_plan_service.delete_plan(db, plan_id)

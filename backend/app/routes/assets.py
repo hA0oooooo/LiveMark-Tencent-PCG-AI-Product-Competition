@@ -36,3 +36,8 @@ def get_asset(asset_id: int, db: Session = Depends(get_db)):
 def analyze_asset(asset_id: int, db: Session = Depends(get_db)):
     asset = asset_service.analyze_asset(db, asset_id)
     return {"asset": asset, "message": "AI 分析完成"}
+
+
+@router.delete("/{asset_id}")
+def delete_asset(asset_id: int, db: Session = Depends(get_db)):
+    return asset_service.delete_asset(db, asset_id)

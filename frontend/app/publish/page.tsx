@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getDefaultAccount, getPublishPlans } from "@/lib/api";
+import { Trash2 } from "lucide-react";
+import { deletePublishPlan, getDefaultAccount, getPublishPlans } from "@/lib/api";
 import type { PublishPlan } from "@/lib/types";
 import { targetMetricLabels } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
@@ -16,13 +17,27 @@ export default function PublishPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    loadPlans();
+  }, [status]);
+
+  function loadPlans() {
     setLoading(true);
     getDefaultAccount()
       .then((account) => getPublishPlans({ account_id: account.id, status: status || undefined }))
       .then(setPlans)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [status]);
+  }
+
+  async function handleDelete(plan: PublishPlan) {
+    if (!window.confirm(`确定删除发布计划「${plan.title}」吗？关联复盘和由复盘同步出的历史内容也会删除。`)) return;
+    try {
+      await deletePublishPlan(plan.id);
+      setPlans((items) => items.filter((item) => item.id !== plan.id));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
 
   if (error) return <ErrorState message={error} />;
 
@@ -43,23 +58,32 @@ export default function PublishPage() {
       {loading ? <LoadingState text="正在加载发布矩阵" /> : plans.length === 0 ? <EmptyState text="暂无发布计划，请先完成素材分析并生成发布矩阵。" /> : (
         <div className="grid gap-4">
           {plans.map((plan) => (
-            <Link key={plan.id} href={`/publish/${plan.id}`}>
-              <Card className="hover:border-accent">
+            <Card key={plan.id} className="hover:border-accent">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
+                  <Link href={`/publish/${plan.id}`} className="min-w-0 flex-1">
                     <CardTitle>{plan.title}</CardTitle>
                     <p className="text-sm text-muted">{plan.caption}</p>
+                  </Link>
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-md bg-surface px-3 py-1 text-sm">{targetMetricLabels[plan.target_metric] || plan.target_metric}</div>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(plan)}
+                      className="rounded-md p-2 text-muted hover:bg-surface hover:text-brand"
+                      aria-label="删除发布计划"
+                      title="删除发布计划"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                  <div className="rounded-md bg-surface px-3 py-1 text-sm">{targetMetricLabels[plan.target_metric] || plan.target_metric}</div>
                 </div>
-                <div className="mt-3 grid gap-2 text-sm text-muted md:grid-cols-4">
-                  <div>状态：{plan.status}</div>
-                  <div>发布时间：{plan.recommended_publish_time}</div>
-                  <div>创建：{formatDate(plan.created_at)}</div>
-                  <div>封面文案：{plan.cover_text}</div>
-                </div>
-              </Card>
-            </Link>
+                <Link href={`/publish/${plan.id}`} className="mt-3 grid gap-2 text-sm text-muted md:grid-cols-4">
+                <div>状态：{plan.status}</div>
+                <div>发布时间：{plan.recommended_publish_time}</div>
+                <div>创建：{formatDate(plan.created_at)}</div>
+                <div>封面文案：{plan.cover_text}</div>
+              </Link>
+            </Card>
           ))}
         </div>
       )}

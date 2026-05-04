@@ -47,3 +47,8 @@ def update(db: Session, plan: PublishPlan, data: dict) -> PublishPlan:
     db.commit()
     db.refresh(plan)
     return plan
+
+
+def delete(db: Session, plan: PublishPlan) -> None:
+    db.delete(plan)
+    db.commit()

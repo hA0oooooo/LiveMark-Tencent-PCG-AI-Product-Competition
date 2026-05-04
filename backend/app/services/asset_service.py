@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 from sqlalchemy.orm import Session
 
@@ -6,6 +7,7 @@ from fastapi import UploadFile
 
 from app.config import settings
 from app.exceptions import bad_request, not_found
+from app.models import HistoricalPost, PostResult, PublishPlan
 from app.repositories import asset_repository, frame_repository
 from app.services import account_service, analytics_service, clip_service, modelscope_service, video_service
 from app.utils.file_utils import ensure_dir, is_allowed_video_file
@@ -122,3 +124,42 @@ def analyze_asset(db: Session, asset_id: int):
 def mark_asset_failed(db: Session, asset_id: int, error_message: str):
     asset = get_asset(db, asset_id)
     return asset_repository.update(db, asset, {"status": "failed", "summary": error_message})
+
+
+def delete_asset(db: Session, asset_id: int):
+    asset = get_asset_detail(db, asset_id)
+    account_id = asset.account_id
+    file_paths = [asset.video_path]
+    file_paths.extend(frame.frame_path for frame in asset.frames)
+    file_paths.extend(clip.cover_frame_path for clip in asset.clips)
+
+    results = (
+        db.query(PostResult)
+        .join(PublishPlan, PostResult.publish_plan_id == PublishPlan.id)
+        .filter(PublishPlan.asset_id == asset_id)
+        .all()
+    )
+    for result in results:
+        if result.historical_post_id:
+            db.query(HistoricalPost).filter(HistoricalPost.id == result.historical_post_id).delete()
+        db.delete(result)
+    db.commit()
+    asset_repository.delete(db, asset)
+    for file_path in file_paths:
+        delete_local_path(file_path)
+    delete_local_path(Path(settings.FRAME_DIR) / f"asset-{asset_id}")
+    account_service.recalculate_account_baseline(db, account_id)
+    return {"message": "素材已删除"}
+
+
+def delete_local_path(file_path: str | Path | None):
+    if not file_path:
+        return
+    path = Path(file_path)
+    try:
+        if path.is_dir():
+            shutil.rmtree(path)
+        elif path.exists():
+            path.unlink()
+    except OSError:
+        pass

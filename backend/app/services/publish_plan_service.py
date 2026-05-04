@@ -1,6 +1,7 @@
 import json
 from sqlalchemy.orm import Session
 
+from app.models import HistoricalPost, PostResult
 from app.exceptions import not_found
 from app.repositories import asset_repository, publish_plan_repository
 from app.services import account_service, analytics_service, clip_service, memory_service, modelscope_service, xhs_strategy_service
@@ -101,3 +102,17 @@ def update_plan(db: Session, plan_id: int, update_data: PublishPlanUpdate):
         if asset:
             asset_repository.update(db, asset, {"status": "reviewed"})
     return updated
+
+
+def delete_plan(db: Session, plan_id: int):
+    plan = get_plan(db, plan_id)
+    account_id = plan.account_id
+    result = db.query(PostResult).filter(PostResult.publish_plan_id == plan.id).first()
+    if result:
+        if result.historical_post_id:
+            db.query(HistoricalPost).filter(HistoricalPost.id == result.historical_post_id).delete()
+        db.delete(result)
+        db.commit()
+    publish_plan_repository.delete(db, plan)
+    account_service.recalculate_account_baseline(db, account_id)
+    return {"message": "发布计划已删除"}
