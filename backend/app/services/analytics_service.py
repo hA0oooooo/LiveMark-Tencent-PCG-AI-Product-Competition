@@ -112,11 +112,15 @@ def get_growth_insights(db: Session, account_id: int) -> list[str]:
     performance = get_content_type_performance(db, account_id)
     account = account_repository.get(db, account_id)
     profile = memory_service.account_profile_memory(account) if account else {}
+    has_strategy = bool(profile.get("strategy_summary"))
     if not performance:
-        insights = [
-            "当前账号已使用手动基准数据，后续请从素材上传、发布矩阵和复盘数据开始积累真实内容记忆。",
-            "复盘时优先观察收藏率、评论率和可选转粉率，并与账号基准对比。",
-        ]
+        insights = []
+        if has_strategy:
+            insights.append(f"当前增长策略：{profile['strategy_summary']}。素材分析和发布矩阵会优先围绕该策略判断发布优先级。")
+        else:
+            insights.append("尚未设置增长策略：建议先用 3-5 条历史内容或一次完整复盘，让系统识别更适合账号的内容方向，再由你确认写入账号长期记忆。")
+        insights.append("下一轮先从素材上传、发布矩阵和内容实验复盘开始积累真实内容记忆。")
+        insights.append("复盘时优先观察收藏率、评论率和可选转粉率，并与账号基准对比。")
         if profile.get("shooting_style_memory"):
             insights.append(f"拍摄风格建议：{profile['shooting_style_memory']}")
         if profile.get("content_direction_memory"):
@@ -124,10 +128,13 @@ def get_growth_insights(db: Session, account_id: int) -> list[str]:
         return insights
     best = performance[0]
     learning = memory_service.recent_account_learning(db, account_id, limit=3)
-    insights = [
-        f"{best['content_type']} 当前相对更适合做发布优先级判断。",
-        "复盘时优先观察收藏率、评论率和可选转粉率。",
-    ]
+    insights = []
+    if has_strategy:
+        insights.append(f"当前增长策略：{profile['strategy_summary']}。下一轮建议优先验证该策略是否带来更高收藏、评论或转粉信号。")
+    else:
+        insights.append(f"可考虑设置增长策略：围绕历史表现较好的 {best['content_type']} 做连续实验，并把验证结果写入账号长期记忆。")
+    insights.append(f"{best['content_type']} 当前相对更适合做发布优先级判断。")
+    insights.append("复盘时优先观察收藏率、评论率和可选转粉率。")
     if profile.get("shooting_style_memory"):
         insights.append(f"拍摄风格建议：{profile['shooting_style_memory']}")
     if profile.get("content_direction_memory"):

@@ -15,7 +15,16 @@ export function formatScore(value: number | null | undefined): string {
 
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "暂无";
-  return new Date(value).toLocaleString("zh-CN", { hour12: false });
+  const normalized = /[zZ]|[+-]\d{2}:\d{2}$/.test(value) ? value : `${value}Z`;
+  return new Date(normalized).toLocaleString("zh-CN", {
+    hour12: false,
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
 
 export function formatTimeRange(start: number, end: number): string {

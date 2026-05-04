@@ -49,22 +49,38 @@ export default function AnalysisPage() {
       </Card>
       <Card>
         <CardTitle>候选片段卡片</CardTitle>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4">
           {(asset.clips || []).map((clip) => (
-            <div key={clip.id} className="rounded-md border border-line p-4">
-              <img src={mediaUrl(clip.cover_frame_path)} alt="" className="aspect-video w-full rounded object-cover" />
-              <div className="mt-3 text-sm text-muted">{formatTimeRange(clip.start_time, clip.end_time)}</div>
-              <div className="mt-1 text-2xl font-semibold text-brand">{formatScore(clip.growth_score)}</div>
-              <div className="text-sm text-muted">涨粉机会评分</div>
-              <div className="mt-2 text-sm">目标指标：{targetMetricLabels[clip.target_metric]}</div>
-              <p className="mt-2 text-sm text-muted">{clip.ai_reason}</p>
-              {clip.editing_advice && <p className="mt-2 rounded bg-surface p-2 text-xs text-ink">剪辑建议：{clip.editing_advice}</p>}
-              {clip.account_fit_reason && <p className="mt-2 rounded bg-surface p-2 text-xs text-muted">账号匹配：{clip.account_fit_reason}</p>}
-              {clip.risk_note && <p className="mt-2 rounded bg-surface p-2 text-xs text-muted">风险提示：{clip.risk_note}</p>}
+            <div key={clip.id} className="grid gap-4 rounded-md border border-line p-4 lg:grid-cols-[320px_1fr]">
+              <div>
+                <img src={mediaUrl(clip.cover_frame_path)} alt="" className="aspect-video w-full rounded object-cover" />
+                <div className="mt-3 text-sm text-muted">{formatTimeRange(clip.start_time, clip.end_time)}</div>
+                <div className="mt-2 flex items-end gap-2">
+                  <div className="text-3xl font-semibold text-brand">{formatScore(clip.growth_score)}</div>
+                  <div className="pb-1 text-sm text-muted">/ 100</div>
+                </div>
+                <div className="text-sm text-muted">涨粉机会评分，满分 100</div>
+                <div className="mt-2 rounded-md bg-surface px-3 py-2 text-sm">目标指标：{targetMetricLabels[clip.target_metric]}</div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <InfoBlock title="AI 推荐理由" text={clip.ai_reason || "暂无"} />
+                <InfoBlock title="剪辑建议" text={clip.editing_advice || "暂无"} />
+                <InfoBlock title="账号匹配" text={clip.account_fit_reason || "暂无"} />
+                <InfoBlock title="风险提示" text={clip.risk_note || "暂无"} muted />
+              </div>
             </div>
           ))}
         </div>
       </Card>
+    </div>
+  );
+}
+
+function InfoBlock({ title, text, muted = false }: { title: string; text: string; muted?: boolean }) {
+  return (
+    <div className="rounded-md bg-surface p-3">
+      <div className="text-xs font-medium text-muted">{title}</div>
+      <p className={`mt-1 text-sm ${muted ? "text-muted" : "text-ink"}`}>{text}</p>
     </div>
   );
 }

@@ -71,10 +71,10 @@ export default function AccountPage() {
         <h1 className="text-2xl font-semibold">账号画像与历史数据</h1>
         <p className="mt-1 text-sm text-muted">历史内容只用于建立账号基准，不用于训练模型。</p>
       </div>
-      <div className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
+      <form onSubmit={saveAccount} className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
         <Card>
           <CardTitle>编辑账号画像</CardTitle>
-          <form onSubmit={saveAccount} className="grid gap-3">
+          <div className="grid gap-3">
             <Label label="账号名"><Input name="name" defaultValue={account.name} /></Label>
             <Label label="账号垂类"><Input name="niche" defaultValue={account.niche} /></Label>
             <Label label="目标粉丝"><Textarea name="target_audience" defaultValue={account.target_audience} rows={3} /></Label>
@@ -83,30 +83,35 @@ export default function AccountPage() {
             <Label label="当前发布笔记数"><Input name="current_note_count" type="number" defaultValue={account.current_note_count} /></Label>
             <Label label="当前获得点赞数"><Input name="total_likes" type="number" defaultValue={account.total_likes} /></Label>
             <Label label="当前获得收藏数"><Input name="total_saves" type="number" defaultValue={account.total_saves} /></Label>
-            <div className="rounded-md border border-line bg-surface p-3">
-              <div className="text-sm font-medium">账号长期记忆</div>
-              <p className="mt-1 text-xs text-muted">由用户确认后维护，AI 复盘只给更新建议，不自动覆盖。</p>
-            </div>
-            <Label label="当前增长策略摘要"><Textarea name="strategy_summary" defaultValue={account.strategy_summary} rows={3} /></Label>
-            <Label label="拍摄风格记忆"><Textarea name="shooting_style_memory" defaultValue={account.shooting_style_memory} rows={3} /></Label>
-            <Label label="内容方向记忆"><Textarea name="content_direction_memory" defaultValue={account.content_direction_memory} rows={3} /></Label>
-            <Label label="目标粉丝偏好记忆"><Textarea name="audience_preference_memory" defaultValue={account.audience_preference_memory} rows={3} /></Label>
-            <Label label="不建议继续强化的内容"><Textarea name="negative_lessons" defaultValue={account.negative_lessons} rows={3} /></Label>
-            <Button disabled={saving}>{saving ? "保存中" : "保存账号画像"}</Button>
-          </form>
-        </Card>
-        <Card>
-          <CardTitle>账号基准数据</CardTitle>
-          <div className="grid gap-3 md:grid-cols-3">
-            <Metric label="粉丝数" value={formatNumber(account.follower_count)} />
-            <Metric label="当前发布笔记数" value={formatNumber(account.current_note_count)} />
-            <Metric label="当前获得点赞数" value={formatNumber(account.total_likes)} />
-            <Metric label="当前获得收藏数" value={formatNumber(account.total_saves)} />
           </div>
         </Card>
-      </div>
+        <div className="grid gap-4">
+          <Card>
+            <CardTitle>账号基准数据</CardTitle>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Metric label="粉丝数" value={formatNumber(account.follower_count)} />
+              <Metric label="当前发布笔记数" value={formatNumber(account.current_note_count)} />
+              <Metric label="当前获得点赞数" value={formatNumber(account.total_likes)} />
+              <Metric label="当前获得收藏数" value={formatNumber(account.total_saves)} />
+            </div>
+          </Card>
+          <Card>
+            <CardTitle>账号长期记忆</CardTitle>
+            <p className="mb-3 text-xs text-muted">由用户确认后维护；AI 复盘只给更新建议，不自动覆盖。未设置增长策略时，下一轮增长建议会根据历史内容和复盘数据生成可手动采纳的策略方向。</p>
+            <div className="grid gap-3">
+              <Label label="当前增长策略摘要"><Textarea name="strategy_summary" defaultValue={account.strategy_summary} rows={3} /></Label>
+              <Label label="拍摄风格记忆"><Textarea name="shooting_style_memory" defaultValue={account.shooting_style_memory} rows={3} /></Label>
+              <Label label="内容方向记忆"><Textarea name="content_direction_memory" defaultValue={account.content_direction_memory} rows={3} /></Label>
+              <Label label="目标粉丝偏好记忆"><Textarea name="audience_preference_memory" defaultValue={account.audience_preference_memory} rows={3} /></Label>
+              <Label label="不建议继续强化的内容"><Textarea name="negative_lessons" defaultValue={account.negative_lessons} rows={3} /></Label>
+              <Button disabled={saving}>{saving ? "保存中" : "保存账号画像"}</Button>
+            </div>
+          </Card>
+        </div>
+      </form>
       <Card>
         <CardTitle>新增历史内容</CardTitle>
+        <p className="mb-3 text-sm text-muted">这里只录入既往小红书笔记的数据指标，用来补充账号基准和内容类型表现；不上传历史视频。新视频素材请进入素材库上传，发布后的实际数据请在内容实验复盘中录入。</p>
         <form onSubmit={addPost} className="grid gap-3 md:grid-cols-6">
           <Input name="title" placeholder="标题" required />
           <select name="content_type" className="rounded-md border border-line px-3 py-2 text-sm">
