@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer } from "recharts";
 import { getAsset } from "@/lib/api";
 import type { Asset } from "@/lib/types";
 import { targetMetricLabels } from "@/lib/constants";
@@ -60,6 +61,9 @@ export default function AnalysisPage() {
                   <div className="pb-1 text-sm text-muted">/ 100</div>
                 </div>
                 <div className="text-sm text-muted">涨粉机会评分，满分 100</div>
+                <div className="mt-3 h-52 rounded-md bg-white p-2">
+                  <ScoreRadar clip={clip} />
+                </div>
                 <div className="mt-2 rounded-md bg-surface px-3 py-2 text-sm">目标指标：{targetMetricLabels[clip.target_metric]}</div>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
@@ -73,6 +77,27 @@ export default function AnalysisPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+function ScoreRadar({ clip }: { clip: NonNullable<Asset["clips"]>[number] }) {
+  const data = [
+    { metric: "互动", value: clip.interaction_score },
+    { metric: "情绪", value: clip.emotion_score },
+    { metric: "稀缺", value: clip.rarity_score },
+    { metric: "清晰", value: clip.clarity_score },
+    { metric: "封面", value: clip.title_cover_score },
+    { metric: "匹配", value: clip.account_fit_score },
+  ];
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <RadarChart data={data} outerRadius="72%">
+        <PolarGrid stroke="#e5e7eb" />
+        <PolarAngleAxis dataKey="metric" tick={{ fill: "#64748b", fontSize: 12 }} />
+        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
+        <Radar dataKey="value" stroke="#e11d48" fill="#e11d48" fillOpacity={0.22} strokeWidth={2} />
+      </RadarChart>
+    </ResponsiveContainer>
   );
 }
 

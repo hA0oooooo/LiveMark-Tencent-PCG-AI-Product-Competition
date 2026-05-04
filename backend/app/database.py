@@ -35,6 +35,7 @@ SQLITE_SCHEMA_COLUMNS = {
         "account_fit_reason": "TEXT DEFAULT ''",
     },
     "post_results": {
+        "historical_post_id": "INTEGER",
         "ai_memory_suggestion": "TEXT DEFAULT ''",
     },
 }

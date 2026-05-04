@@ -38,7 +38,9 @@ def generate_candidate_clips(asset, frames: list, frame_analyses: list[dict], hi
             }
         )
     ranked = sorted(candidates, key=lambda item: item["growth_score"], reverse=True)[:5]
-    return rank_clips(merge_close_clips(ranked))[:3]
+    if (asset.duration or 0) <= 12:
+        return rank_clips(ranked)[:3]
+    return rank_clips(merge_close_clips(ranked, min_gap_seconds=1))[:3]
 
 
 def merge_close_clips(candidate_clips: list[dict], min_gap_seconds: int = 5) -> list[dict]:

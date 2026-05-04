@@ -1,8 +1,9 @@
 import json
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.exceptions import not_found
-from app.repositories import account_repository, asset_repository, post_result_repository, publish_plan_repository
+from app.repositories import account_repository, asset_repository, historical_post_repository, post_result_repository, publish_plan_repository
 from app.schemas import PostResultCreate
 from app.services import analytics_service, memory_service, modelscope_service
 from app.utils.metric_utils import compute_lift, compute_rate
@@ -45,18 +46,53 @@ def create_post_result_and_review(db: Session, result_create: PostResultCreate):
     metrics = compute_post_metrics(result_create)
     lifts = compute_relative_lifts(result_create, benchmark)
     data = {**result_create.model_dump(), **metrics, **lifts, "ai_review": "", "next_action": ""}
-    result = post_result_repository.create(db, data)
+    existing = post_result_repository.get_by_plan(db, result_create.publish_plan_id)
+    result = post_result_repository.update(db, existing, data) if existing else post_result_repository.create(db, data)
     ai_review, next_action, ai_memory_suggestion = generate_review_text(db, account, plan, result, benchmark)
     result.ai_review = ai_review
     result.next_action = next_action
     result.ai_memory_suggestion = ai_memory_suggestion
     db.commit()
     db.refresh(result)
+    sync_review_to_historical_post(db, account, plan, result)
     publish_plan_repository.update(db, plan, {"status": "reviewed"})
     asset = asset_repository.get(db, plan.asset_id)
     if asset:
         asset_repository.update(db, asset, {"status": "reviewed"})
     return result
+
+
+def sync_review_to_historical_post(db: Session, account, plan, result):
+    clip_type = getattr(getattr(plan, "clip", None), "clip_type", None) or "long_tail"
+    data = {
+        "account_id": account.id,
+        "title": result.actual_title or plan.title,
+        "content_type": clip_type,
+        "publish_time": result.actual_publish_time or datetime.utcnow(),
+        "views": result.views,
+        "likes": result.likes,
+        "saves": result.saves,
+        "comments": result.comments,
+        "shares": 0,
+        "follows": result.follows,
+        "has_interaction": clip_type == "interaction",
+        "has_emotion": clip_type == "emotion",
+        "has_rare_view": clip_type in {"timely", "long_tail", "persona_detail"},
+        "has_cover_text": bool(plan.cover_text),
+        "has_bgm": False,
+        "creator_note": f"由发布计划 #{plan.id} 的内容实验复盘同步生成",
+    }
+    post = historical_post_repository.get(db, result.historical_post_id) if result.historical_post_id else None
+    if post:
+        historical_post_repository.update(db, post, data)
+    else:
+        post = historical_post_repository.create(db, data)
+        result.historical_post_id = post.id
+        db.commit()
+        db.refresh(result)
+    from app.services import account_service
+
+    account_service.recalculate_account_baseline(db, account.id)
 
 
 def get_post_result(db: Session, post_result_id: int):

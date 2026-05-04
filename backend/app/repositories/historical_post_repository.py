@@ -11,6 +11,18 @@ def create(db: Session, data: dict) -> HistoricalPost:
     return post
 
 
+def get(db: Session, post_id: int) -> HistoricalPost | None:
+    return db.query(HistoricalPost).filter(HistoricalPost.id == post_id).first()
+
+
+def update(db: Session, post: HistoricalPost, data: dict) -> HistoricalPost:
+    for key, value in data.items():
+        setattr(post, key, value)
+    db.commit()
+    db.refresh(post)
+    return post
+
+
 def bulk_create(db: Session, rows: list[dict]) -> list[HistoricalPost]:
     posts = [HistoricalPost(**row) for row in rows]
     db.add_all(posts)

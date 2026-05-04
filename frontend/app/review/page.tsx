@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState } from "react";
-import { createPostResult, getDefaultAccount, getPublishPlans } from "@/lib/api";
+import { createPostResult, getDefaultAccount, getPostResultByPlan, getPublishPlans } from "@/lib/api";
 import type { PostResult, PublishPlan } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardTitle } from "@/components/ui/Card";
@@ -18,6 +18,8 @@ function ReviewContent() {
   const search = useSearchParams();
   const [plans, setPlans] = useState<PublishPlan[]>([]);
   const [result, setResult] = useState<PostResult | null>(null);
+  const [existingResult, setExistingResult] = useState<PostResult | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState(search.get("planId") || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -30,6 +32,15 @@ function ReviewContent() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    setResult(null);
+    setExistingResult(null);
+    if (!selectedPlanId) return;
+    getPostResultByPlan(Number(selectedPlanId))
+      .then(setExistingResult)
+      .catch(() => setExistingResult(null));
+  }, [selectedPlanId]);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
@@ -37,7 +48,7 @@ function ReviewContent() {
     const form = new FormData(event.currentTarget);
     try {
       const created = await createPostResult({
-        publish_plan_id: Number(form.get("publish_plan_id")),
+        publish_plan_id: Number(selectedPlanId || form.get("publish_plan_id")),
         actual_title: String(form.get("actual_title") || ""),
         views: Number(form.get("views")),
         likes: Number(form.get("likes")),
@@ -46,6 +57,7 @@ function ReviewContent() {
         follows: form.get("follows") ? Number(form.get("follows")) : null
       });
       setResult(created);
+      setExistingResult(created);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -64,22 +76,38 @@ function ReviewContent() {
       </div>
       <Card>
         <CardTitle>提交复盘</CardTitle>
-        <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
+        <form key={`${selectedPlanId}-${existingResult?.id || "new"}`} onSubmit={submit} className="grid gap-4 md:grid-cols-2">
           <Label label="已发布计划">
-            <select name="publish_plan_id" defaultValue={search.get("planId") || ""} className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm" required>
+            <select
+              name="publish_plan_id"
+              value={selectedPlanId}
+              onChange={(event) => setSelectedPlanId(event.target.value)}
+              className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm"
+              required
+            >
               <option value="">请选择</option>
               {plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.title}</option>)}
             </select>
           </Label>
-          <Label label="实际标题"><Input name="actual_title" placeholder="可选" /></Label>
-          <Label label="浏览"><Input name="views" type="number" required /></Label>
-          <Label label="点赞"><Input name="likes" type="number" required /></Label>
-          <Label label="收藏"><Input name="saves" type="number" required /></Label>
-          <Label label="评论"><Input name="comments" type="number" required /></Label>
-          <Label label="涨粉（可选）"><Input name="follows" type="number" /></Label>
-          <div className="md:col-span-2"><Button disabled={submitting}>{submitting ? "正在生成复盘" : "提交内容实验复盘"}</Button></div>
+          <Label label="实际标题"><Input name="actual_title" defaultValue={existingResult?.actual_title || ""} placeholder="可选" /></Label>
+          <Label label="浏览"><Input name="views" type="number" defaultValue={existingResult?.views} required /></Label>
+          <Label label="点赞"><Input name="likes" type="number" defaultValue={existingResult?.likes} required /></Label>
+          <Label label="收藏"><Input name="saves" type="number" defaultValue={existingResult?.saves} required /></Label>
+          <Label label="评论"><Input name="comments" type="number" defaultValue={existingResult?.comments} required /></Label>
+          <Label label="涨粉（可选）"><Input name="follows" type="number" defaultValue={existingResult?.follows ?? ""} /></Label>
+          <div className="md:col-span-2">
+            <Button disabled={submitting || !selectedPlanId}>{submitting ? "正在生成复盘" : existingResult ? "更新内容实验复盘" : "提交内容实验复盘"}</Button>
+          </div>
         </form>
       </Card>
+      {existingResult && (
+        <Card>
+          <CardTitle>已存在复盘</CardTitle>
+          <p className="text-sm text-muted">该发布计划已经有一条复盘。你可以直接修改上方数据并重新提交，系统会更新同一条复盘并重新生成建议。</p>
+          <p className="mt-2 text-sm text-ink">{existingResult.next_action}</p>
+          <Link href={`/review/${existingResult.id}`}><Button className="mt-4" variant="secondary">查看已有复盘详情</Button></Link>
+        </Card>
+      )}
       {result && (
         <Card>
           <CardTitle>复盘已生成</CardTitle>

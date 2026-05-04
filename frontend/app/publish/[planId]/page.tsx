@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getPublishPlan, updatePublishPlan } from "@/lib/api";
-import type { PublishPlan } from "@/lib/types";
+import { getClip, getPublishPlan, updatePublishPlan } from "@/lib/api";
+import type { Clip, PublishPlan } from "@/lib/types";
 import { targetMetricLabels } from "@/lib/constants";
+import { formatScore, formatTimeRange } from "@/lib/format";
+import { mediaUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { ErrorState, LoadingState } from "@/components/shared/State";
@@ -13,9 +15,16 @@ import { ErrorState, LoadingState } from "@/components/shared/State";
 export default function PublishDetailPage() {
   const { planId } = useParams<{ planId: string }>();
   const [plan, setPlan] = useState<PublishPlan | null>(null);
+  const [clip, setClip] = useState<Clip | null>(null);
   const [error, setError] = useState("");
 
-  const load = () => getPublishPlan(Number(planId)).then(setPlan).catch((err) => setError(err.message));
+  const load = () =>
+    getPublishPlan(Number(planId))
+      .then(async (item) => {
+        setPlan(item);
+        setClip(await getClip(item.clip_id));
+      })
+      .catch((err) => setError(err.message));
   useEffect(() => { load(); }, [planId]);
 
   async function markPublished() {
@@ -34,6 +43,17 @@ export default function PublishDetailPage() {
       </div>
       <Card>
         <CardTitle>{plan.title}</CardTitle>
+        {clip && (
+          <div className="mb-5 grid gap-4 rounded-md border border-line bg-surface p-4 md:grid-cols-[260px_1fr]">
+            <img src={mediaUrl(clip.cover_frame_path)} alt="" className="aspect-video w-full rounded object-cover" />
+            <div className="grid gap-2 text-sm">
+              <div className="font-medium text-ink">推荐封面帧</div>
+              <div className="text-muted">发布计划默认使用候选片段的代表帧作为封面参考，实际发布时可以按这张图补充封面文案。</div>
+              <div>片段时间：{formatTimeRange(clip.start_time, clip.end_time)}</div>
+              <div>涨粉机会评分：{formatScore(clip.growth_score)} / 100</div>
+            </div>
+          </div>
+        )}
         <div className="grid gap-4 text-sm">
           <Block label="封面文案" value={plan.cover_text} />
           <Block label="正文 caption" value={plan.caption} />

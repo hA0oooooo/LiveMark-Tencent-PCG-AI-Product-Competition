@@ -232,6 +232,7 @@ class PostResultRead(PostResultCreate):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    historical_post_id: int | None = None
     like_rate: float
     save_rate: float
     comment_rate: float

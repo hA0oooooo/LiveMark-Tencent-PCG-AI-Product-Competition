@@ -160,6 +160,7 @@ class PostResult(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     publish_plan_id: Mapped[int] = mapped_column(ForeignKey("publish_plans.id"), nullable=False, unique=True, index=True)
+    historical_post_id: Mapped[int | None] = mapped_column(ForeignKey("historical_posts.id"), nullable=True, index=True)
     actual_publish_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     actual_title: Mapped[str] = mapped_column(String(240), default="")
     views: Mapped[int] = mapped_column(Integer, default=0)

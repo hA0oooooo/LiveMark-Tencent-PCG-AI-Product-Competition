@@ -3,6 +3,7 @@ import type {
   Account,
   AccountBenchmark,
   Asset,
+  Clip,
   DashboardStats,
   HistoricalPost,
   PostResult,
@@ -82,8 +83,8 @@ export async function getClipsByAsset(assetId: number) {
   return request(`/api/assets/${assetId}/clips`);
 }
 
-export async function getClip(clipId: number) {
-  return request(`/api/clips/${clipId}`);
+export async function getClip(clipId: number): Promise<Clip> {
+  return request<Clip>(`/api/clips/${clipId}`);
 }
 
 export async function generatePublishMatrix(assetId: number): Promise<PublishPlan[]> {

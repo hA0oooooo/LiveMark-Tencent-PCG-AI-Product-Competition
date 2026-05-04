@@ -91,7 +91,7 @@ def analyze_frame_with_qwen_vl(image_path: str, context: dict) -> dict:
                 ],
             }
         ]
-        text = call_openai_compatible_chat(messages, settings.VISION_MODEL_NAME, temperature=0.3)
+        text = call_openai_compatible_chat(messages, settings.VISION_MODEL_NAME, temperature=0.45)
         return {**FRAME_ANALYSIS_FALLBACK, **parse_model_json_response(text, FRAME_ANALYSIS_FALLBACK)}
     except Exception:
         return FRAME_ANALYSIS_FALLBACK.copy()

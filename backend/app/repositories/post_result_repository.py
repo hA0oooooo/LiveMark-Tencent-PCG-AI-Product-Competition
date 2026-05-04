@@ -11,6 +11,14 @@ def create(db: Session, data: dict) -> PostResult:
     return result
 
 
+def update(db: Session, result: PostResult, data: dict) -> PostResult:
+    for key, value in data.items():
+        setattr(result, key, value)
+    db.commit()
+    db.refresh(result)
+    return result
+
+
 def get(db: Session, post_result_id: int) -> PostResult | None:
     return db.query(PostResult).filter(PostResult.id == post_result_id).first()
 
