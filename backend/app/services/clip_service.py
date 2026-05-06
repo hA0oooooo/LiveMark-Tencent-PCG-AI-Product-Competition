@@ -91,6 +91,7 @@ def normalize_model_score(value) -> float:
 
 
 def build_editing_advice(timestamp: float, clip_type: str, target_metric: str, analysis: dict) -> str:
+    clip_type_label = clip_type_label_zh(clip_type)
     metric_hint = {
         "click": "把最稀缺的画面放在前 1 秒，封面文字直接点出现场才看到的瞬间。",
         "save": "保留清晰稳定的画面，节奏不要切太碎，适合做可反复看的收藏片段。",
@@ -99,14 +100,28 @@ def build_editing_advice(timestamp: float, clip_type: str, target_metric: str, a
         "long_tail": "保留现场氛围和完整情绪，让片段适合几天后仍被回看。",
     }
     return (
-        f"围绕 {timestamp:.1f}s 附近剪出 {clip_type} 片段。"
+        f"围绕 {timestamp:.1f}s 附近剪出{clip_type_label}片段。"
         f"{metric_hint.get(target_metric, metric_hint['long_tail'])}"
         f"画面判断：{analysis.get('description', '需人工复核画面重点')}"
     )
 
 
 def build_account_fit_reason(clip_type: str, scores: dict) -> str:
+    clip_type_label = clip_type_label_zh(clip_type)
     return (
-        f"该片段被归为 {clip_type}，账号匹配分 {scores.get('account_fit_score', 0):.1f}。"
+        f"该片段被归为{clip_type_label}，账号匹配分 {scores.get('account_fit_score', 0):.1f}。"
         "判断依据来自账号历史内容类型表现、目标粉丝偏好和当前片段互动/情绪/稀缺视角信号。"
     )
+
+
+def clip_type_label_zh(clip_type: str) -> str:
+    labels = {
+        "timely": "抢鲜型",
+        "interaction": "互动型",
+        "high_quality_collection": "高清收藏型",
+        "emotion": "情绪氛围型",
+        "persona_detail": "人设细节型",
+        "long_tail": "长尾现场型",
+        "compilation": "合集型",
+    }
+    return labels.get(clip_type, "现场记录型")

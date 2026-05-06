@@ -45,23 +45,33 @@ def generate_plan_for_clip(db: Session, clip_id: int):
     llm_plan = modelscope_service.generate_publish_plan_with_llm(account, asset, clip, benchmark, memory_context)
     fallback = xhs_strategy_service.build_fallback_plan(asset, clip)
     data = {**fallback, **{k: v for k, v in llm_plan.items() if v}}
+    title = clean_user_text(data.get("recommended_title") or data.get("title") or fallback["recommended_title"])
+    cover_text = clean_user_text(data.get("cover_text", ""))
+    caption = clean_user_text(data.get("caption", ""))
+    comment_prompt = clean_user_text(data.get("comment_prompt", ""))
+    recommended_publish_time = clean_user_text(data.get("recommended_publish_time", ""))
+    ai_strategy = clean_user_text(data.get("ai_strategy", ""))
+    hashtags = data.get("hashtags", [])
+    if isinstance(hashtags, list):
+        hashtags = [clean_user_text(str(item)) for item in hashtags]
+        hashtags_value = json.dumps(hashtags, ensure_ascii=False)
+    else:
+        hashtags_value = clean_user_text(str(hashtags))
     return publish_plan_repository.create(
         db,
         {
             "clip_id": clip.id,
             "asset_id": asset.id,
             "account_id": account.id,
-            "title": data.get("recommended_title") or data.get("title") or fallback["recommended_title"],
-            "cover_text": data.get("cover_text", ""),
-            "caption": data.get("caption", ""),
-            "hashtags": json.dumps(data.get("hashtags", []), ensure_ascii=False)
-            if isinstance(data.get("hashtags"), list)
-            else str(data.get("hashtags", "")),
-            "comment_prompt": data.get("comment_prompt", ""),
-            "recommended_publish_time": data.get("recommended_publish_time", ""),
+            "title": title,
+            "cover_text": cover_text,
+            "caption": caption,
+            "hashtags": hashtags_value,
+            "comment_prompt": comment_prompt,
+            "recommended_publish_time": recommended_publish_time,
             "target_metric": normalize_target_metric(data.get("target_metric"), clip.target_metric),
             "status": "draft",
-            "ai_strategy": data.get("ai_strategy", ""),
+            "ai_strategy": ai_strategy,
         },
     )
 
@@ -96,12 +106,43 @@ def update_plan(db: Session, plan_id: int, update_data: PublishPlanUpdate):
     data = update_data.model_dump(exclude_unset=True)
     if isinstance(data.get("hashtags"), list):
         data["hashtags"] = json.dumps(data["hashtags"], ensure_ascii=False)
+    for key in ["title", "cover_text", "caption", "hashtags", "comment_prompt", "recommended_publish_time", "ai_strategy"]:
+        if key in data and isinstance(data[key], str):
+            data[key] = clean_user_text(data[key])
     updated = publish_plan_repository.update(db, plan, data)
     if updated.status == "reviewed":
         asset = asset_repository.get(db, updated.asset_id)
         if asset:
             asset_repository.update(db, asset, {"status": "reviewed"})
     return updated
+
+
+def clean_user_text(text: str) -> str:
+    replacements = {
+        "target_metric": "目标指标",
+        "Target Metric": "目标指标",
+        "Metric": "指标",
+        "Click": "点击",
+        "click": "点击",
+        "Save": "收藏",
+        "save": "收藏",
+        "Comment": "评论",
+        "comment": "评论",
+        "Follow": "关注",
+        "follow": "关注",
+        "Long Tail": "长尾回看",
+        "long_tail": "长尾现场型",
+        "interaction": "互动型",
+        "high_quality_collection": "高清收藏型",
+        "persona_detail": "人设细节型",
+        "emotion": "情绪氛围型",
+        "timely": "抢鲜型",
+        "compilation": "合集型",
+    }
+    cleaned = text or ""
+    for source, target in replacements.items():
+        cleaned = cleaned.replace(source, target)
+    return cleaned
 
 
 def delete_plan(db: Session, plan_id: int):
