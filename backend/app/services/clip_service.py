@@ -12,10 +12,10 @@ def generate_candidate_clips(asset, frames: list, frame_analyses: list[dict], hi
     for frame, analysis in zip(selected_frames, frame_analyses):
         scores = {
             "clarity_score": frame.clarity_score,
-            "interaction_score": float(analysis.get("interaction_score", 50)),
-            "emotion_score": float(analysis.get("emotion_score", 50)),
-            "rarity_score": float(analysis.get("rarity_score", 50)),
-            "title_cover_score": float(analysis.get("cover_potential_score", 50)),
+            "interaction_score": normalize_model_score(analysis.get("interaction_score", 50)),
+            "emotion_score": normalize_model_score(analysis.get("emotion_score", 50)),
+            "rarity_score": normalize_model_score(analysis.get("rarity_score", 50)),
+            "title_cover_score": normalize_model_score(analysis.get("cover_potential_score", 50)),
         }
         clip_type = scoring_service.assign_clip_type(scores, analysis)
         scores["account_fit_score"] = scoring_service.compute_account_fit_score(clip_type, historical_stats)
@@ -78,6 +78,16 @@ def get_clip(db: Session, clip_id: int):
 
 def rank_clips(clips: list):
     return sorted(clips, key=lambda item: item["growth_score"] if isinstance(item, dict) else item.growth_score, reverse=True)
+
+
+def normalize_model_score(value) -> float:
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return 50
+    if 0 <= score <= 10:
+        score *= 10
+    return max(0, min(100, score))
 
 
 def build_editing_advice(timestamp: float, clip_type: str, target_metric: str, analysis: dict) -> str:

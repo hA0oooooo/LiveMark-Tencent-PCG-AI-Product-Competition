@@ -55,7 +55,7 @@ def infer_target_metric(scores: dict, clip_type: str, follows_available: bool = 
 def assign_clip_type(scores: dict, vl_analysis: dict) -> str:
     suggested = vl_analysis.get("suggested_clip_type")
     allowed = {"timely", "interaction", "high_quality_collection", "emotion", "persona_detail", "long_tail", "compilation"}
-    if suggested in allowed:
+    if suggested in allowed and suggested != "long_tail":
         return suggested
     if scores.get("interaction_score", 0) >= 70:
         return "interaction"
