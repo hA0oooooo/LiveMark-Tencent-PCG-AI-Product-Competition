@@ -9,6 +9,8 @@ agent.md
 agent/
 docs/
 
+main.md
+
 # Local backend runtime data and secrets
 backend/.venv/
 backend/.env

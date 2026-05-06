@@ -2,17 +2,20 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getPostResult } from "@/lib/api";
+import { getPostResult, integratePostResultMemory } from "@/lib/api";
 import type { PostResult } from "@/lib/types";
 import { formatNumber, formatRate } from "@/lib/format";
 import { parseJsonText } from "@/lib/utils";
 import { Card, CardTitle } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { ErrorState, LoadingState } from "@/components/shared/State";
 
 export default function ReviewDetailPage() {
   const { postResultId } = useParams<{ postResultId: string }>();
   const [result, setResult] = useState<PostResult | null>(null);
   const [error, setError] = useState("");
+  const [integrating, setIntegrating] = useState(false);
+  const [integratedMessage, setIntegratedMessage] = useState("");
 
   useEffect(() => {
     getPostResult(Number(postResultId)).then(setResult).catch((err) => setError(err.message));
@@ -23,6 +26,21 @@ export default function ReviewDetailPage() {
 
   const review = parseJsonText<Record<string, string | string[]>>(result.ai_review, {});
   const memorySuggestion = parseJsonText<Record<string, string>>(result.ai_memory_suggestion, {});
+
+  async function integrateMemory() {
+    if (!result) return;
+    setIntegrating(true);
+    setError("");
+    setIntegratedMessage("");
+    try {
+      await integratePostResultMemory(result.id);
+      setIntegratedMessage("已整合到账号长期记忆，Dashboard 的下一轮增长建议会基于新记忆更新。");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIntegrating(false);
+    }
+  }
 
   return (
     <div className="page-grid">
@@ -59,7 +77,16 @@ export default function ReviewDetailPage() {
         </div>
       </Card>
       <Card>
-        <CardTitle>账号长期记忆更新建议</CardTitle>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle>账号长期记忆更新建议</CardTitle>
+            <p className="mt-1 text-sm text-muted">确认后可把当前账号记忆和本次建议交给 AI 重新整理，写回账号长期记忆。</p>
+          </div>
+          <Button onClick={integrateMemory} disabled={integrating}>
+            {integrating ? "整合中" : "整合长期记忆"}
+          </Button>
+        </div>
+        {integratedMessage && <div className="mt-3 rounded-md bg-surface p-3 text-sm text-ink">{integratedMessage}</div>}
         <div className="grid gap-3 text-sm">
           <Block label="增长策略摘要" value={memorySuggestion.strategy_summary || ""} />
           <Block label="拍摄风格记忆" value={memorySuggestion.shooting_style_memory || ""} />

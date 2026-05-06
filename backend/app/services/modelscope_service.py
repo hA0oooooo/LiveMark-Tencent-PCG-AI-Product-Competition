@@ -138,3 +138,49 @@ def generate_post_review_with_llm(account: Any, publish_plan: Any, post_result: 
         return {**POST_REVIEW_FALLBACK, **parse_model_json_response(text, POST_REVIEW_FALLBACK)}
     except Exception:
         return POST_REVIEW_FALLBACK.copy()
+
+
+def integrate_account_memory_with_llm(current_memory: dict, memory_suggestion: dict) -> dict:
+    fallback = fallback_integrate_account_memory(current_memory, memory_suggestion)
+    try:
+        prompt = (
+            "你是 LiveMark 的账号长期记忆整理助手。请把账号当前长期记忆和本次复盘给出的更新建议整合成新的账号记忆。\n"
+            "要求：\n"
+            "- 只保留对后续选题、拍摄、发布和复盘有用的信息。\n"
+            "- 不要简单拼接，去重、归纳、保持逻辑清楚。\n"
+            "- 语言给小红书直拍 KOC 看，具体、自然、可执行。\n"
+            "- 不要使用“爆款概率”“破解算法”“保证涨粉”“饭圈策略”等表达。\n"
+            "- 如果新建议和原记忆冲突，优先保留经过复盘数据支持的判断，并弱化没有证据的判断。\n"
+            "只输出 JSON，字段固定为：strategy_summary, shooting_style_memory, content_direction_memory, "
+            "audience_preference_memory, negative_lessons。\n\n"
+            f"账号当前长期记忆：{json.dumps(current_memory, ensure_ascii=False)}\n"
+            f"本次复盘更新建议：{json.dumps(memory_suggestion, ensure_ascii=False)}"
+        )
+        text = call_openai_compatible_chat([{"role": "user", "content": prompt}], settings.TEXT_MODEL_NAME, temperature=0.4)
+        parsed = parse_model_json_response(text, fallback)
+        return {**fallback, **{key: value for key, value in parsed.items() if isinstance(value, str)}}
+    except Exception:
+        return fallback
+
+
+def fallback_integrate_account_memory(current_memory: dict, memory_suggestion: dict) -> dict:
+    fields = [
+        "strategy_summary",
+        "shooting_style_memory",
+        "content_direction_memory",
+        "audience_preference_memory",
+        "negative_lessons",
+    ]
+    return {field: merge_memory_text(current_memory.get(field, ""), memory_suggestion.get(field, "")) for field in fields}
+
+
+def merge_memory_text(current: str, suggestion: str) -> str:
+    current = (current or "").strip()
+    suggestion = (suggestion or "").strip()
+    if not suggestion:
+        return current
+    if not current:
+        return suggestion
+    if suggestion in current:
+        return current
+    return f"{current}\n本次复盘补充：{suggestion}"

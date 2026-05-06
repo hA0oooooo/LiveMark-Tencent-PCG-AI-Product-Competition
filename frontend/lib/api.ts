@@ -127,3 +127,7 @@ export async function getPostResult(postResultId: number): Promise<PostResult> {
 export async function getPostResultByPlan(planId: number): Promise<PostResult> {
   return request<PostResult>(`/api/publish-plans/${planId}/post-result`);
 }
+
+export async function integratePostResultMemory(postResultId: number): Promise<Account> {
+  return request<Account>(`/api/post-results/${postResultId}/integrate-memory`, { method: "POST" });
+}

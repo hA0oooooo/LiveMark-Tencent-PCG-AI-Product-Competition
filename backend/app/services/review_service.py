@@ -1,9 +1,16 @@
 import json
 from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.exceptions import not_found
-from app.repositories import account_repository, asset_repository, historical_post_repository, post_result_repository, publish_plan_repository
+from app.repositories import (
+    account_repository,
+    asset_repository,
+    historical_post_repository,
+    post_result_repository,
+    publish_plan_repository,
+)
 from app.schemas import PostResultCreate
 from app.services import analytics_service, memory_service, modelscope_service
 from app.utils.metric_utils import compute_lift, compute_rate
@@ -41,7 +48,7 @@ def create_post_result_and_review(db: Session, result_create: PostResultCreate):
         raise not_found("未找到发布计划")
     account = account_repository.get(db, plan.account_id)
     if not account:
-        raise not_found("未找到账号")
+        raise not_found("未找到账户")
     benchmark = analytics_service.get_account_benchmark(db, account.id)
     metrics = compute_post_metrics(result_create)
     lifts = compute_relative_lifts(result_create, benchmark)
@@ -107,3 +114,27 @@ def get_post_result_by_plan(db: Session, plan_id: int):
     if not result:
         raise not_found("该发布计划还没有复盘结果")
     return result
+
+
+def integrate_memory_from_post_result(db: Session, post_result_id: int):
+    result = get_post_result(db, post_result_id)
+    plan = publish_plan_repository.get(db, result.publish_plan_id)
+    if not plan:
+        raise not_found("未找到发布计划")
+    account = account_repository.get(db, plan.account_id)
+    if not account:
+        raise not_found("未找到账户")
+    try:
+        suggestion = json.loads(result.ai_memory_suggestion or "{}")
+    except json.JSONDecodeError:
+        suggestion = {}
+    current_memory = {
+        "strategy_summary": account.strategy_summary or "",
+        "shooting_style_memory": account.shooting_style_memory or "",
+        "content_direction_memory": account.content_direction_memory or "",
+        "audience_preference_memory": account.audience_preference_memory or "",
+        "negative_lessons": account.negative_lessons or "",
+    }
+    integrated = modelscope_service.integrate_account_memory_with_llm(current_memory, suggestion)
+    integrated["updated_memory_at"] = datetime.utcnow()
+    return account_repository.update(db, account, integrated)
