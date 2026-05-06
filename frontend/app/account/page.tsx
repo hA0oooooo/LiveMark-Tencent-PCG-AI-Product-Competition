@@ -48,17 +48,29 @@ export default function AccountPage() {
   async function addPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!account) return;
-    const form = new FormData(event.currentTarget);
-    await createHistoricalPost(account.id, {
-      title: String(form.get("title")),
-      content_type: String(form.get("content_type")),
-      views: Number(form.get("views")),
-      likes: Number(form.get("likes")),
-      saves: Number(form.get("saves")),
-      comments: Number(form.get("comments") || 0)
-    });
-    event.currentTarget.reset();
-    await load();
+    const target = event.currentTarget;
+    const form = new FormData(target);
+    try {
+      const created = await createHistoricalPost(account.id, {
+        title: String(form.get("title")),
+        content_type: String(form.get("content_type")),
+        views: Number(form.get("views")),
+        likes: Number(form.get("likes")),
+        saves: Number(form.get("saves")),
+        comments: Number(form.get("comments") || 0)
+      });
+      setPosts((current) => [created, ...current]);
+      target.reset();
+      const [nextBenchmark, nextPosts] = await Promise.all([
+        getAccountBenchmark(account.id),
+        getHistoricalPosts(account.id)
+      ]);
+      setBenchmark(nextBenchmark);
+      setPosts(nextPosts);
+      window.dispatchEvent(new Event("livemark-data-changed"));
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   async function removePost(postId: number) {
@@ -66,7 +78,14 @@ export default function AccountPage() {
     if (!confirm("确认删除这条历史内容吗？删除后账号基准会重新计算。")) return;
     try {
       await deleteHistoricalPost(account.id, postId);
-      await load();
+      setPosts((current) => current.filter((post) => post.id !== postId));
+      const [nextBenchmark, nextPosts] = await Promise.all([
+        getAccountBenchmark(account.id),
+        getHistoricalPosts(account.id)
+      ]);
+      setBenchmark(nextBenchmark);
+      setPosts(nextPosts);
+      window.dispatchEvent(new Event("livemark-data-changed"));
     } catch (err) {
       setError((err as Error).message);
     }

@@ -34,6 +34,7 @@ export default function PublishPage() {
     try {
       await deletePublishPlan(plan.id);
       setPlans((items) => items.filter((item) => item.id !== plan.id));
+      window.dispatchEvent(new Event("livemark-data-changed"));
     } catch (err) {
       setError((err as Error).message);
     }

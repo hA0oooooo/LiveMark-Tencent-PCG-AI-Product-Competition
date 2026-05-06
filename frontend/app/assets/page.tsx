@@ -34,6 +34,7 @@ export default function AssetsPage() {
     try {
       await deleteAsset(asset.id);
       setAssets((items) => items.filter((item) => item.id !== asset.id));
+      window.dispatchEvent(new Event("livemark-data-changed"));
     } catch (err) {
       setError((err as Error).message);
     }

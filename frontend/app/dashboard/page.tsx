@@ -13,11 +13,30 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardStats | null>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  function loadDashboard() {
     getDefaultAccount()
       .then((account) => getDashboardStats(account.id))
-      .then(setData)
+      .then((stats) => {
+        setData(stats);
+        setError("");
+      })
       .catch((err) => setError(err.message));
+  }
+
+  useEffect(() => {
+    const refresh = () => loadDashboard();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") loadDashboard();
+    };
+    loadDashboard();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("livemark-data-changed", refresh);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("livemark-data-changed", refresh);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, []);
 
   const formatChartValue = (value: unknown): string => {

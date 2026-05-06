@@ -58,6 +58,7 @@ function ReviewContent() {
       });
       setResult(created);
       setExistingResult(created);
+      window.dispatchEvent(new Event("livemark-data-changed"));
     } catch (err) {
       setError((err as Error).message);
     } finally {

@@ -139,10 +139,22 @@ def delete_asset(db: Session, asset_id: int):
         .filter(PublishPlan.asset_id == asset_id)
         .all()
     )
+    historical_post_ids: set[int] = set()
     for result in results:
         if result.historical_post_id:
-            db.query(HistoricalPost).filter(HistoricalPost.id == result.historical_post_id).delete()
+            historical_post_ids.add(result.historical_post_id)
         db.delete(result)
+    if results:
+        db.flush()
+    for plan in asset.publish_plans:
+        historical_post_ids.update(
+            post.id
+            for post in db.query(HistoricalPost)
+            .filter(HistoricalPost.account_id == account_id, HistoricalPost.creator_note.like(f"%#{plan.id}%"))
+            .all()
+        )
+    if historical_post_ids:
+        db.query(HistoricalPost).filter(HistoricalPost.id.in_(historical_post_ids)).delete(synchronize_session=False)
     db.commit()
     asset_repository.delete(db, asset)
     for file_path in file_paths:

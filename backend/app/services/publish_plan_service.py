@@ -149,10 +149,20 @@ def delete_plan(db: Session, plan_id: int):
     plan = get_plan(db, plan_id)
     account_id = plan.account_id
     result = db.query(PostResult).filter(PostResult.publish_plan_id == plan.id).first()
+    historical_post_ids: set[int] = set()
     if result:
         if result.historical_post_id:
-            db.query(HistoricalPost).filter(HistoricalPost.id == result.historical_post_id).delete()
+            historical_post_ids.add(result.historical_post_id)
         db.delete(result)
+        db.flush()
+    historical_post_ids.update(
+        post.id
+        for post in db.query(HistoricalPost)
+        .filter(HistoricalPost.account_id == account_id, HistoricalPost.creator_note.like(f"%#{plan.id}%"))
+        .all()
+    )
+    if historical_post_ids:
+        db.query(HistoricalPost).filter(HistoricalPost.id.in_(historical_post_ids)).delete(synchronize_session=False)
         db.commit()
     publish_plan_repository.delete(db, plan)
     account_service.recalculate_account_baseline(db, account_id)
