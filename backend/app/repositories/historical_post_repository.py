@@ -44,3 +44,8 @@ def list_by_account(db: Session, account_id: int) -> list[HistoricalPost]:
 def delete_by_account(db: Session, account_id: int) -> None:
     db.query(HistoricalPost).filter(HistoricalPost.account_id == account_id).delete()
     db.commit()
+
+
+def delete(db: Session, post: HistoricalPost) -> None:
+    db.delete(post)
+    db.commit()

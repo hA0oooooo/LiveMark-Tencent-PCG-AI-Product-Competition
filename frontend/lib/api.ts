@@ -47,6 +47,10 @@ export async function createHistoricalPost(accountId: number, payload: Partial<H
   return request<HistoricalPost>(`/api/accounts/${accountId}/historical-posts`, { method: "POST", body: JSON.stringify(payload) });
 }
 
+export async function deleteHistoricalPost(accountId: number, postId: number): Promise<{ message: string }> {
+  return request<{ message: string }>(`/api/accounts/${accountId}/historical-posts/${postId}`, { method: "DELETE" });
+}
+
 export async function bulkCreateHistoricalPosts(accountId: number, payload: { posts: Partial<HistoricalPost>[] }): Promise<HistoricalPost[]> {
   return request<HistoricalPost[]>(`/api/accounts/${accountId}/historical-posts/bulk`, { method: "POST", body: JSON.stringify(payload) });
 }

@@ -26,3 +26,8 @@ def list_posts(account_id: int, db: Session = Depends(get_db)):
 @router.get("/stats", response_model=HistoricalPostStatsRead)
 def get_stats(account_id: int, db: Session = Depends(get_db)):
     return analytics_service.get_historical_post_stats(db, account_id)
+
+
+@router.delete("/{post_id}")
+def delete_post(account_id: int, post_id: int, db: Session = Depends(get_db)):
+    return historical_post_service.delete_post(db, account_id, post_id)

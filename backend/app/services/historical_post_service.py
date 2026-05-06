@@ -3,6 +3,8 @@ from datetime import datetime
 from pathlib import Path
 from sqlalchemy.orm import Session
 
+from app.exceptions import not_found
+from app.models import PostResult
 from app.repositories import historical_post_repository
 from app.schemas import HistoricalPostBulkCreate, HistoricalPostCreate
 from app.services import account_service
@@ -29,6 +31,17 @@ def bulk_create_posts(db: Session, account_id: int, posts: HistoricalPostBulkCre
 def list_posts_by_account(db: Session, account_id: int):
     account_service.get_account(db, account_id)
     return historical_post_repository.list_by_account(db, account_id)
+
+
+def delete_post(db: Session, account_id: int, post_id: int):
+    account_service.get_account(db, account_id)
+    post = historical_post_repository.get(db, post_id)
+    if not post or post.account_id != account_id:
+        raise not_found("历史内容不存在")
+    db.query(PostResult).filter(PostResult.historical_post_id == post_id).update({"historical_post_id": None})
+    historical_post_repository.delete(db, post)
+    account_service.recalculate_account_baseline(db, account_id)
+    return {"message": "历史内容已删除"}
 
 
 def normalize_historical_post_row(row: dict) -> HistoricalPostCreate:

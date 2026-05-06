@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { createHistoricalPost, getAccountBenchmark, getDefaultAccount, getHistoricalPosts, updateAccount } from "@/lib/api";
+import { createHistoricalPost, deleteHistoricalPost, getAccountBenchmark, getDefaultAccount, getHistoricalPosts, updateAccount } from "@/lib/api";
 import type { Account, AccountBenchmark, HistoricalPost } from "@/lib/types";
 import { contentTypeLabels } from "@/lib/constants";
 import { formatNumber } from "@/lib/format";
@@ -55,11 +55,21 @@ export default function AccountPage() {
       views: Number(form.get("views")),
       likes: Number(form.get("likes")),
       saves: Number(form.get("saves")),
-      comments: Number(form.get("comments")),
-      shares: Number(form.get("shares") || 0)
+      comments: Number(form.get("comments") || 0)
     });
     event.currentTarget.reset();
     await load();
+  }
+
+  async function removePost(postId: number) {
+    if (!account) return;
+    if (!confirm("确认删除这条历史内容吗？删除后账号基准会重新计算。")) return;
+    try {
+      await deleteHistoricalPost(account.id, postId);
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   if (error) return <ErrorState message={error} />;
@@ -113,15 +123,14 @@ export default function AccountPage() {
         <CardTitle>新增历史内容</CardTitle>
         <p className="mb-3 text-sm text-muted">这里只录入既往小红书笔记的数据指标，用来补充账号基准和内容类型表现；不上传历史视频。新视频素材请进入素材库上传，发布后的实际数据请在内容实验复盘中录入。</p>
         <form onSubmit={addPost} className="grid gap-3 md:grid-cols-6">
-          <Input name="title" placeholder="标题" required />
+          <Input name="title" placeholder="标题/内容" required />
           <select name="content_type" className="rounded-md border border-line px-3 py-2 text-sm">
             {Object.entries(contentTypeLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
           </select>
           <Input name="views" type="number" placeholder="浏览" required />
           <Input name="likes" type="number" placeholder="点赞" required />
           <Input name="saves" type="number" placeholder="收藏" required />
-          <Input name="comments" type="number" placeholder="评论" required />
-          <Input name="shares" type="number" placeholder="分享" />
+          <Input name="comments" type="number" placeholder="评论，可选" />
           <Button className="md:col-span-1">新增</Button>
         </form>
       </Card>
@@ -130,7 +139,7 @@ export default function AccountPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-muted">
-              <tr><th className="py-2">标题</th><th>类型</th><th>浏览</th><th>点赞</th><th>收藏</th><th>评论</th><th>分享</th></tr>
+              <tr><th className="py-2">标题/内容</th><th>类型</th><th>浏览</th><th>点赞</th><th>收藏</th><th>评论</th><th>操作</th></tr>
             </thead>
             <tbody>
               {posts.map((post) => (
@@ -141,7 +150,7 @@ export default function AccountPage() {
                   <td>{formatNumber(post.likes)}</td>
                   <td>{formatNumber(post.saves)}</td>
                   <td>{formatNumber(post.comments)}</td>
-                  <td>{formatNumber(post.shares || 0)}</td>
+                  <td><button type="button" className="text-red-600 hover:underline" onClick={() => removePost(post.id)}>删除</button></td>
                 </tr>
               ))}
             </tbody>
